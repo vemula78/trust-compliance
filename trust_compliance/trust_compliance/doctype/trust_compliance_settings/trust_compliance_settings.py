@@ -45,17 +45,22 @@ class TrustComplianceSettings(Document):
         """Warn - loudly, but do not silently change a global setting.
 
         Frappe uses Indian lakh/crore grouping and Indian wording in
-        `money_in_words` only when the site's number format is #,##,###.##. With
-        any other format an 80G receipt prints "Rupees Five Hundred And Sixty
-        Thousand only" and Rs 560,000.00 where an Indian statutory receipt must
-        read "Rupees Five Lakh Sixty Thousand only" and Rs 5,60,000.00.
+        `money_in_words` only when the effective number format is #,##,###.##.
+        With any other format an 80G receipt prints "Rupees Five Hundred And
+        Sixty Thousand only" and Rs 560,000.00 where an Indian statutory receipt
+        must read "Rupees Five Lakh, Sixty Thousand only" and Rs 5,60,000.00.
 
         The amount in words is the operative figure on the receipt, so this is a
         real defect in the document, not a cosmetic preference. It is a
         site-global setting owned by the administrator, so it is flagged here -
         where they are already configuring this app - rather than overwritten.
+
+        On Frappe 16 the format is locale-resolved: the Language record wins over
+        the System Settings default. The effective value is read here rather than
+        System Settings, because a site can have Indian settings and still print
+        non-Indian amounts if its Language record says otherwise.
         """
-        current = frappe.db.get_single_value("System Settings", "number_format")
+        current = frappe.locale.get_number_format().string
         if current == INDIAN_NUMBER_FORMAT:
             return
 
@@ -64,7 +69,9 @@ class TrustComplianceSettings(Document):
                 "The site number format is <b>{0}</b>. Indian lakh/crore grouping and "
                 "Indian amount-in-words need <b>{1}</b>: until it is changed, 80G "
                 "receipts will print \"Five Hundred And Sixty Thousand\" instead of "
-                "\"Five Lakh Sixty Thousand\". Set it in System Settings."
+                "\"Five Lakh, Sixty Thousand\". Set it in System Settings, and clear "
+                "the Number Format on the active Language record - on Frappe 16 the "
+                "Language record overrides the system default."
             ).format(current, INDIAN_NUMBER_FORMAT),
             title=_("Number format is not Indian"),
             indicator="orange",

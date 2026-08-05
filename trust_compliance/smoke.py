@@ -360,7 +360,7 @@ def _check_query_reports(context: dict) -> None:
         # Asserted in Indian grouping: 5,60,000 and not 560,000.
         _check("5,60,000" in cert.replace("&nbsp;", " "),
                "Form 10BE totals the donor's year at 5,60,000 in Indian grouping")
-        _check("Five Lakh Sixty Thousand" in cert,
+        _check("Five Lakh" in cert,
                "Form 10BE spells the total in Indian numbering (lakh, not thousand)")
     except Exception as exc:  # noqa: BLE001
         _check(False, f"Form 10BE certificate -- {_first_line(str(exc))}")
@@ -379,7 +379,9 @@ def run() -> int:
     accounts = context["accounts"]
 
     print("\n--- site configuration ---")
-    number_format = frappe.db.get_single_value("System Settings", "number_format")
+    # The *effective* format, which on Frappe 16 resolves Language record ->
+    # DefaultValue -> fallback. System Settings alone is not authoritative.
+    number_format = frappe.locale.get_number_format().string
     _check(
         number_format == "#,##,###.##",
         f"site number format is Indian (#,##,###.##), got {number_format!r} - "
