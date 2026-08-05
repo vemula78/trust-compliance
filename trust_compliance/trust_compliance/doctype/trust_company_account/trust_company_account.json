@@ -1,0 +1,103 @@
+{
+ "actions": [],
+ "creation": "2026-08-05 00:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "company",
+  "donation_income_account",
+  "corpus_fund_account",
+  "inter_fund_transfer_account",
+  "column_break_accounts",
+  "cash_account",
+  "bank_account",
+  "fcra_bank_account",
+  "property_tax_expense_account",
+  "receipt_prefix"
+ ],
+ "fields": [
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Company",
+   "options": "Company",
+   "reqd": 1
+  },
+  {
+   "fieldname": "donation_income_account",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Donation Income Account",
+   "options": "Account",
+   "reqd": 1,
+   "description": "Credited by a non-corpus donation. Must be an Income account."
+  },
+  {
+   "fieldname": "corpus_fund_account",
+   "fieldtype": "Link",
+   "label": "Corpus Fund Account",
+   "options": "Account",
+   "reqd": 1,
+   "description": "Credited by a corpus donation instead of income. Must be an Equity account - corpus is capital, not income of the year."
+  },
+  {
+   "fieldname": "inter_fund_transfer_account",
+   "fieldtype": "Link",
+   "label": "Inter-fund Transfer Account",
+   "options": "Account",
+   "description": "Equity clearing account carrying both legs of a fund transfer, so the trial balance is untouched and only the fund dimension moves."
+  },
+  {
+   "fieldname": "column_break_accounts",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "cash_account",
+   "fieldtype": "Link",
+   "label": "Cash Account",
+   "options": "Account"
+  },
+  {
+   "fieldname": "bank_account",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Domestic Bank Account",
+   "options": "Account"
+  },
+  {
+   "fieldname": "fcra_bank_account",
+   "fieldtype": "Link",
+   "label": "FCRA-designated Bank Account",
+   "options": "Account",
+   "description": "The single designated account a foreign contribution may be banked into. Must be flagged FCRA on the Account record."
+  },
+  {
+   "fieldname": "property_tax_expense_account",
+   "fieldtype": "Link",
+   "label": "Property Tax Expense Account",
+   "options": "Account"
+  },
+  {
+   "default": "80G",
+   "fieldname": "receipt_prefix",
+   "fieldtype": "Data",
+   "label": "Receipt Series Prefix",
+   "description": "Receipts are numbered <prefix>/<financial year>/<sequence>, gap-free per financial year."
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-08-05 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Trust Compliance",
+ "name": "Trust Company Account",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": []
+}

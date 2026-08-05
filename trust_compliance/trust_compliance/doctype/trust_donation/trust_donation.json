@@ -1,0 +1,268 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "naming_series:",
+ "creation": "2026-08-05 00:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "is_submittable": 1,
+ "field_order": [
+  "naming_series",
+  "donor",
+  "donor_name",
+  "donor_type",
+  "column_break_head",
+  "company",
+  "donation_date",
+  "receipt_no",
+  "financial_year",
+  "section_amount",
+  "amount",
+  "mode",
+  "fund",
+  "column_break_amount",
+  "is_corpus",
+  "is_anonymous",
+  "deposit_account",
+  "section_purpose",
+  "purpose",
+  "in_kind_description",
+  "in_kind_asset_category",
+  "section_gl",
+  "journal_entry",
+  "column_break_gl",
+  "amended_from"
+ ],
+ "fields": [
+  {
+   "default": "DON-.YYYY.-",
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Series",
+   "options": "DON-.YYYY.-",
+   "reqd": 1
+  },
+  {
+   "fieldname": "donor",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Donor",
+   "options": "Trust Donor",
+   "reqd": 1
+  },
+  {
+   "fetch_from": "donor.donor_name",
+   "fieldname": "donor_name",
+   "fieldtype": "Data",
+   "label": "Donor Name",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "donor.donor_type",
+   "fieldname": "donor_type",
+   "fieldtype": "Data",
+   "label": "Donor Type",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_head",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "in_standard_filter": 1,
+   "label": "Company",
+   "options": "Company",
+   "reqd": 1
+  },
+  {
+   "fieldname": "donation_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Donation Date",
+   "reqd": 1
+  },
+  {
+   "fieldname": "receipt_no",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Receipt No",
+   "read_only": 1,
+   "unique": 1,
+   "no_copy": 1,
+   "description": "Allocated on submit, gap-free per financial year. Never reused."
+  },
+  {
+   "fieldname": "financial_year",
+   "fieldtype": "Data",
+   "label": "Financial Year",
+   "read_only": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "section_amount",
+   "fieldtype": "Section Break",
+   "label": "Receipt"
+  },
+  {
+   "fieldname": "amount",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Amount",
+   "reqd": 1,
+   "options": "Company:company:default_currency"
+  },
+  {
+   "default": "Bank",
+   "fieldname": "mode",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Mode",
+   "options": "Cash\nBank\nUPI\nCheque\nIn Kind",
+   "reqd": 1
+  },
+  {
+   "fieldname": "fund",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Fund",
+   "options": "Fund",
+   "reqd": 1,
+   "description": "Every donation belongs to a fund. A foreign contribution may only go to an FCRA fund."
+  },
+  {
+   "fieldname": "column_break_amount",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "is_corpus",
+   "fieldtype": "Check",
+   "label": "Corpus Donation",
+   "description": "Credits the corpus equity account instead of donation income - corpus is capital, not income of the year."
+  },
+  {
+   "default": "0",
+   "fieldname": "is_anonymous",
+   "fieldtype": "Check",
+   "label": "Anonymous",
+   "read_only": 1,
+   "fetch_from": "donor.is_anonymous",
+   "fetch_if_empty": 0
+  },
+  {
+   "fieldname": "deposit_account",
+   "fieldtype": "Link",
+   "label": "Deposited Into",
+   "options": "Account",
+   "description": "Left blank, the account configured for the mode is used. A foreign contribution is always forced to the FCRA-designated account."
+  },
+  {
+   "fieldname": "section_purpose",
+   "fieldtype": "Section Break",
+   "label": "Purpose"
+  },
+  {
+   "fieldname": "purpose",
+   "fieldtype": "Small Text",
+   "label": "Purpose",
+   "description": "For a Restricted fund, the donor's stated purpose. Printed on the receipt and reported in FC-4."
+  },
+  {
+   "depends_on": "eval:doc.mode=='In Kind'",
+   "fieldname": "in_kind_description",
+   "fieldtype": "Small Text",
+   "label": "In-kind Description",
+   "mandatory_depends_on": "eval:doc.mode=='In Kind'"
+  },
+  {
+   "depends_on": "eval:doc.mode=='In Kind'",
+   "fieldname": "in_kind_asset_category",
+   "fieldtype": "Link",
+   "label": "Asset Category",
+   "options": "Asset Category",
+   "description": "In-kind donations capitalise an asset at the stated valuation instead of debiting cash."
+  },
+  {
+   "fieldname": "section_gl",
+   "fieldtype": "Section Break",
+   "label": "Accounting"
+  },
+  {
+   "fieldname": "journal_entry",
+   "fieldtype": "Link",
+   "label": "Journal Entry",
+   "options": "Journal Entry",
+   "read_only": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "column_break_gl",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Trust Donation",
+   "print_hide": 1,
+   "read_only": 1
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-08-05 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Trust Compliance",
+ "name": "Trust Donation",
+ "naming_rule": "By \"Naming Series\" field",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "amend": 1,
+   "cancel": 1,
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Accounts Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Accounts User",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "read": 1,
+   "report": 1,
+   "export": 1,
+   "print": 1,
+   "role": "Auditor"
+  }
+ ],
+ "row_format": "Dynamic",
+ "search_fields": "receipt_no,donor_name",
+ "sort_field": "donation_date",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "donor_name",
+ "track_changes": 1
+}

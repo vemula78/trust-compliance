@@ -1,0 +1,133 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "field:fund_code",
+ "creation": "2026-08-05 00:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "fund_code",
+  "fund_name",
+  "company",
+  "column_break_main",
+  "fund_class",
+  "is_default",
+  "is_fcra",
+  "disabled",
+  "section_description",
+  "description"
+ ],
+ "fields": [
+  {
+   "fieldname": "fund_code",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Fund Code",
+   "reqd": 1,
+   "unique": 1,
+   "description": "Short code used as the fund's identifier on every journal line, e.g. HOSP or FCRA-GEN."
+  },
+  {
+   "fieldname": "fund_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Fund Name",
+   "reqd": 1
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Company",
+   "options": "Company",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_main",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "Unrestricted",
+   "fieldname": "fund_class",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Fund Class",
+   "options": "Corpus\nRestricted\nDesignated\nUnrestricted",
+   "reqd": 1,
+   "description": "Corpus is capital and cannot be spent or transferred out. Restricted is donor-specified. Designated is trust-earmarked. Unrestricted is general."
+  },
+  {
+   "default": "0",
+   "fieldname": "is_default",
+   "fieldtype": "Check",
+   "label": "Default Fund",
+   "description": "Exactly one fund per company. Journal lines left untagged are attributed here in every fund report, so the default fund must be domestic."
+  },
+  {
+   "default": "0",
+   "fieldname": "is_fcra",
+   "fieldtype": "Check",
+   "label": "FCRA Fund",
+   "description": "Holds foreign contribution only. FCRA and domestic money can never mix in one journal entry."
+  },
+  {
+   "default": "0",
+   "fieldname": "disabled",
+   "fieldtype": "Check",
+   "label": "Disabled"
+  },
+  {
+   "fieldname": "section_description",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "description",
+   "fieldtype": "Small Text",
+   "label": "Description",
+   "description": "For a Restricted fund, record the donor's stated purpose verbatim."
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-08-05 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Trust Compliance",
+ "name": "Fund",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Accounts Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "read": 1,
+   "report": 1,
+   "role": "Accounts User",
+   "export": 1
+  },
+  {
+   "read": 1,
+   "report": 1,
+   "role": "Auditor",
+   "export": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "fund_code",
+ "sort_order": "ASC",
+ "states": [],
+ "track_changes": 1
+}

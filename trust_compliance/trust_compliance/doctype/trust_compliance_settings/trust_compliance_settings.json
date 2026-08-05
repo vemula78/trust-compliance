@@ -1,0 +1,95 @@
+{
+ "actions": [],
+ "creation": "2026-08-05 00:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "intro",
+  "company_accounts",
+  "section_policy",
+  "require_pan_above",
+  "block_cash_donation_above",
+  "column_break_policy",
+  "enforce_fund_on_gl",
+  "anonymous_donation_threshold"
+ ],
+ "fields": [
+  {
+   "fieldname": "intro",
+   "fieldtype": "HTML",
+   "options": "<p>Accounts the Trust module posts to, per company. A donation cannot be receipted for a company until its row exists here - the accounts are never guessed from account codes or names.</p>"
+  },
+  {
+   "fieldname": "company_accounts",
+   "fieldtype": "Table",
+   "label": "Company Accounts",
+   "options": "Trust Company Account"
+  },
+  {
+   "fieldname": "section_policy",
+   "fieldtype": "Section Break",
+   "label": "Policy"
+  },
+  {
+   "default": "200000",
+   "fieldname": "require_pan_above",
+   "fieldtype": "Currency",
+   "label": "Require Donor PAN Above",
+   "description": "Form 10BD cannot be filed for a donor without an identification number. Donations at or above this value are refused when the donor has no PAN."
+  },
+  {
+   "default": "200000",
+   "fieldname": "block_cash_donation_above",
+   "fieldtype": "Currency",
+   "label": "Block Cash Donation Above",
+   "description": "Section 269ST caps a single cash receipt at Rs 2,00,000. Set to 0 to disable the check."
+  },
+  {
+   "fieldname": "column_break_policy",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "1",
+   "fieldname": "enforce_fund_on_gl",
+   "fieldtype": "Check",
+   "label": "Enforce FCRA Segregation on Submit",
+   "description": "Validates the GL entries every voucher produces. Turning this off is logged; it exists only for data migration."
+  },
+  {
+   "default": "100000",
+   "fieldname": "anonymous_donation_threshold",
+   "fieldtype": "Currency",
+   "label": "Section 115BBC Threshold",
+   "description": "Anonymous donations are taxable above the higher of this amount and 5% of total donations."
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "issingle": 1,
+ "links": [],
+ "modified": "2026-08-05 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Trust Compliance",
+ "name": "Trust Compliance Settings",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "role": "Accounts Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "read": 1,
+   "role": "Accounts User"
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}
