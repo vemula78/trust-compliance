@@ -126,10 +126,6 @@ def _setup() -> dict:
         year.flags.ignore_permissions = True
         year.insert()
 
-    # Indian lakh/crore grouping and Indian amount-in-words depend on this.
-    frappe.db.set_single_value("System Settings", "number_format", "#,##,###.##")
-    frappe.clear_cache()
-
     accounts = {
         "bank_account": _account("Domestic Bank", "Bank Accounts", "Asset", "Bank"),
         "fcra_bank_account": _account("FCRA Designated Bank", "Bank Accounts", "Asset",
@@ -381,6 +377,15 @@ def run() -> int:
     context = _setup()
     _reset()
     accounts = context["accounts"]
+
+    print("\n--- site configuration ---")
+    number_format = frappe.db.get_single_value("System Settings", "number_format")
+    _check(
+        number_format == "#,##,###.##",
+        f"site number format is Indian (#,##,###.##), got {number_format!r} - "
+        f"without it 80G receipts print \"Five Hundred And Sixty Thousand\" "
+        f"instead of \"Five Lakh Sixty Thousand\"",
+    )
 
     print("\n--- dimension ---")
     _check(fund_field_exists(), "fund dimension exists on GL Entry")
