@@ -137,6 +137,11 @@ class PropertyTaxSchedule(Document):
                 "bill_date": frappe.utils.nowdate(),
                 "due_date": self.due_date,
                 "remarks": description,
+                # The fund is needed at parent level as well as on the item row:
+                # the item row carries it onto the expense leg, but the payable
+                # (Creditors) leg takes its dimension from the parent, and the
+                # dimension is mandatory for balance-sheet accounts.
+                "fund": self.fund,
                 "items": [
                     {
                         "item_name": _("Property Tax"),
