@@ -24,8 +24,21 @@ modules take plain mappings and return plain data, so the entire rule set is
 unit-tested outside a bench:
 
 ```bash
-python3 -m pytest tests/ -q
+python3 -m pytest tests/ -q          # 50 tests, no bench needed
 ```
+
+There is also an end-to-end self-check that runs against a real site. It creates a
+company, funds, donors and posted donations, then asserts that receipts number
+gap-free, that donations post balanced fund-tagged GL, that every route by which
+foreign and domestic money could mix is refused, and that the fund and FC-4
+reports reconcile against the GL it just wrote. It is idempotent — it resets its
+own prior run — and returns a non-zero failure count so it can gate a deployment:
+
+```bash
+bench --site <site> execute trust_compliance.smoke.run
+```
+
+Verified on ERPNext 16.31.0 / Frappe 16.30.0: 40/40 checks pass.
 
 The frappe-facing code (`fcra.py`, the doctype controllers) reads records, hands
 mappings to the core, and turns returned strings into `frappe.throw`. This mirrors
