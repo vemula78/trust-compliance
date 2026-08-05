@@ -145,7 +145,7 @@ class PropertyTaxSchedule(Document):
                         "rate": flt(self.amount),
                         "expense_account": expense_account,
                         "fund": self.fund,
-                        "uom": "Nos",
+                        "uom": _default_uom(),
                         "conversion_factor": 1,
                     }
                 ],
@@ -157,6 +157,35 @@ class PropertyTaxSchedule(Document):
         invoice.insert()
         invoice.submit()
         return invoice.name
+
+
+def _default_uom() -> str:
+    """A UOM for the invoice's single charge row.
+
+    A tax demand is not stock and the unit is meaningless, but ERPNext requires
+    one on an invoice item. "Nos" is the conventional Frappe fixture and is used
+    when present; otherwise the site's stock UOM, or any UOM at all, so this does
+    not fail on a site whose setup wizard never ran and which therefore has a
+    thinner UOM list than a standard install.
+    """
+    if frappe.db.exists("UOM", "Nos"):
+        return "Nos"
+
+    stock_uom = frappe.db.get_single_value("Stock Settings", "stock_uom")
+    if stock_uom and frappe.db.exists("UOM", stock_uom):
+        return stock_uom
+
+    any_uom = frappe.db.get_value("UOM", {}, "name")
+    if any_uom:
+        return any_uom
+
+    frappe.throw(
+        _(
+            "No Unit of Measure exists on this site, so a property-tax invoice line "
+            "cannot be created. Create a UOM such as Nos first."
+        ),
+        title=_("Setup Incomplete"),
+    )
 
 
 def mark_paid_from_payment(purchase_invoice: str) -> None:
