@@ -38,7 +38,7 @@ own prior run — and returns a non-zero failure count so it can gate a deployme
 bench --site <site> execute trust_compliance.smoke.run
 ```
 
-Verified on ERPNext 16.31.0 / Frappe 16.30.0: 40/40 checks pass.
+Verified on ERPNext 16.31.0 / Frappe 16.30.0: 61/61 checks pass.
 
 The frappe-facing code (`fcra.py`, the doctype controllers) reads records, hands
 mappings to the core, and turns returned strings into `frappe.throw`. This mirrors
@@ -99,6 +99,33 @@ Then, in this order:
 4. Fill in **Trust Compliance Settings → Company Accounts**.
 5. Optionally make the dimension mandatory:
    `trust_compliance.setup.accounting_dimension.set_fund_mandatory(company, default_fund)`.
+6. **Set the number format to `#,##,###.##`.** Not cosmetic: the amount in words is
+   the operative figure on an 80G receipt, and Frappe only uses Indian lakh/crore
+   wording when this format is effective. Otherwise a receipt reads *"Rupees Five
+   Hundred And Sixty Thousand only"* instead of *"Rupees Five Lakh, Sixty Thousand
+   only"*. On **Frappe 16 this is locale-resolved** — the active `Language`
+   record's Number Format overrides the System Settings default — so set System
+   Settings *and* make sure the Language record does not contradict it. Trust
+   Compliance Settings warns when the effective format is not Indian.
+
+## Reports
+
+Six script reports, all driven from one GL query (`trust_compliance/queries.py`) so
+no two can disagree with the ledger, and all computed by the tested pure functions:
+
+| Report | Notes |
+|---|---|
+| **Fund Balances** | Opening / inflow / outflow / closing net assets per fund. |
+| **Fund Income and Expenditure** | The per-fund statement, as an indented tree. Equity — corpus and inter-fund transfers — excluded by construction. |
+| **Donation Register** | With Section 115BBC monitoring against the higher of the statutory floor and 5% of total donations. |
+| **FCRA Register** | Contributor-wise receipts, utilisation with administrative classification, and the 20% cap measured against contribution *received*. Warns when ledger receipts exceed receipted donations, i.e. foreign contribution posted by journal entry with no contributor row to file. |
+| **Income Application** | 85% application tracking. Labelled a working paper, with every simplification stated on the report itself. |
+| **Form 10BD Statement** | One row per donor per donation type per mode, matching the filing utility. Flags rows with no PAN rather than dropping the donor. |
+
+Plus the **80G Donation Receipt** print format, and a **Form 10BE certificate**
+rendered per donor per financial year from the same computation that produces the
+10BD statement — so the certificate a donor holds and the return filed with the
+department cannot disagree. It is reachable from a button on Trust Donor.
 
 ## Known gaps
 
@@ -109,10 +136,14 @@ Tracked deliberately, not hidden:
   *property* — the dominant in-kind case — is the Property register's job.
 - **Property register, property tax, maintenance, program accounting** (Phase 11
   of the source ERP) are not ported yet.
-- **Reports** — FC-4, Form 10BD/10BE, 85% application and the fund-wise
-  statements exist as computations in `core/compliance.py` with full test
-  coverage, but are not yet exposed as Frappe reports or print formats.
-- **Fund transfers** and **Form 10 accumulation** records are not ported yet.
+- **Fund transfers** are not ported yet — the equity clearing account is
+  configurable and the fund reports already read an equity debit as an outflow, so
+  the reporting side is in place, but there is no Fund Transfer document.
+- **Approval workflow** for fund transfers is not built. ERPNext's Workflow engine
+  should cover this natively once the document exists.
+- **CSV export shape** for Form 10BD is the report's own export, not the utility's
+  exact template. The columns are named to match; the mapping has not been tested
+  against a live filing.
 
 ## Provenance
 
