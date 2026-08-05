@@ -82,6 +82,21 @@ def _setup() -> dict:
     if not fund_field_exists():
         ensure_dimension_fields()
 
+    # ERPNext refuses to post outside an active Fiscal Year, which is its
+    # equivalent of the source ERP's "open the accounting period first" rule.
+    # A fresh site whose setup wizard was never completed has none.
+    for start_year in (2025, 2026):
+        label = f"{start_year}-{start_year + 1}"
+        if frappe.db.exists("Fiscal Year", label):
+            continue
+        year = frappe.get_doc({
+            "doctype": "Fiscal Year", "year": label,
+            "year_start_date": f"{start_year}-04-01",
+            "year_end_date": f"{start_year + 1}-03-31",
+        })
+        year.flags.ignore_permissions = True
+        year.insert()
+
     accounts = {
         "bank_account": _account("Domestic Bank", "Bank Accounts", "Asset", "Bank"),
         "fcra_bank_account": _account("FCRA Designated Bank", "Bank Accounts", "Asset",
