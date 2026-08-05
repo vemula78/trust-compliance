@@ -24,8 +24,14 @@ REQUIRED_ROOT_TYPES = {
 }
 
 
+#: Frappe switches to Indian lakh/crore grouping - and to Indian wording in
+#: `money_in_words` - only when the site's number format is this one.
+INDIAN_NUMBER_FORMAT = "#,##,###.##"
+
+
 class TrustComplianceSettings(Document):
     def validate(self):
+        self._warn_if_not_indian_number_format()
         seen: set[str] = set()
         for row in self.company_accounts:
             if row.company in seen:
@@ -34,6 +40,35 @@ class TrustComplianceSettings(Document):
                 )
             seen.add(row.company)
             self._validate_row(row)
+
+    def _warn_if_not_indian_number_format(self):
+        """Warn - loudly, but do not silently change a global setting.
+
+        Frappe uses Indian lakh/crore grouping and Indian wording in
+        `money_in_words` only when the site's number format is #,##,###.##. With
+        any other format an 80G receipt prints "Rupees Five Hundred And Sixty
+        Thousand only" and Rs 560,000.00 where an Indian statutory receipt must
+        read "Rupees Five Lakh Sixty Thousand only" and Rs 5,60,000.00.
+
+        The amount in words is the operative figure on the receipt, so this is a
+        real defect in the document, not a cosmetic preference. It is a
+        site-global setting owned by the administrator, so it is flagged here -
+        where they are already configuring this app - rather than overwritten.
+        """
+        current = frappe.db.get_single_value("System Settings", "number_format")
+        if current == INDIAN_NUMBER_FORMAT:
+            return
+
+        frappe.msgprint(
+            _(
+                "The site number format is <b>{0}</b>. Indian lakh/crore grouping and "
+                "Indian amount-in-words need <b>{1}</b>: until it is changed, 80G "
+                "receipts will print \"Five Hundred And Sixty Thousand\" instead of "
+                "\"Five Lakh Sixty Thousand\". Set it in System Settings."
+            ).format(current, INDIAN_NUMBER_FORMAT),
+            title=_("Number format is not Indian"),
+            indicator="orange",
+        )
 
     def _validate_row(self, row):
         for fieldname, expected_root in REQUIRED_ROOT_TYPES.items():

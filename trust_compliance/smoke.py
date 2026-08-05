@@ -126,6 +126,10 @@ def _setup() -> dict:
         year.flags.ignore_permissions = True
         year.insert()
 
+    # Indian lakh/crore grouping and Indian amount-in-words depend on this.
+    frappe.db.set_single_value("System Settings", "number_format", "#,##,###.##")
+    frappe.clear_cache()
+
     accounts = {
         "bank_account": _account("Domestic Bank", "Bank Accounts", "Asset", "Bank"),
         "fcra_bank_account": _account("FCRA Designated Bank", "Bank Accounts", "Asset",
@@ -357,8 +361,11 @@ def _check_query_reports(context: dict) -> None:
         cert = get_certificate_html(context["domestic_donor"], "2026-27")
         _check("FORM No. 10BE" in cert, "Form 10BE certificate renders")
         # 50,000 bank + 10,000 UPI + 5,00,000 corpus in 2026-27 for this donor.
-        _check("560,000" in cert.replace("&nbsp;", " "),
-               "Form 10BE totals the donor's year at 5,60,000")
+        # Asserted in Indian grouping: 5,60,000 and not 560,000.
+        _check("5,60,000" in cert.replace("&nbsp;", " "),
+               "Form 10BE totals the donor's year at 5,60,000 in Indian grouping")
+        _check("Five Lakh Sixty Thousand" in cert,
+               "Form 10BE spells the total in Indian numbering (lakh, not thousand)")
     except Exception as exc:  # noqa: BLE001
         _check(False, f"Form 10BE certificate -- {_first_line(str(exc))}")
 
