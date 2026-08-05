@@ -22,19 +22,46 @@ DIMENSION_LABEL = "Fund"
 
 
 def create_fund_dimension() -> None:
-    if frappe.db.exists("Accounting Dimension", DIMENSION_DOCTYPE):
-        return
+    """Create the Fund dimension and materialise its fields synchronously.
 
-    dimension = frappe.get_doc(
-        {
-            "doctype": "Accounting Dimension",
-            "document_type": DIMENSION_DOCTYPE,
-            "label": DIMENSION_LABEL,
-            "disabled": 0,
-        }
+    ERPNext's `AccountingDimension.on_update` enqueues
+    `make_dimension_in_accounting_doctypes` on the long queue with
+    `enqueue_after_commit`, so outside a test run the `fund` fields appear only
+    once a background worker picks the job up. That is not good enough here: if
+    the worker is down - routine on a fresh on-premise install - the dimension
+    would exist with no `fund` column on GL Entry, and FCRA segregation would
+    have nothing to read. So the field creation is also called directly, which is
+    idempotent; whichever of the two runs second is a no-op.
+    """
+    if not frappe.db.exists("Accounting Dimension", DIMENSION_DOCTYPE):
+        dimension = frappe.get_doc(
+            {
+                "doctype": "Accounting Dimension",
+                "document_type": DIMENSION_DOCTYPE,
+                "label": DIMENSION_LABEL,
+                "disabled": 0,
+            }
+        )
+        dimension.flags.ignore_permissions = True
+        dimension.insert()
+
+    ensure_dimension_fields()
+
+
+def ensure_dimension_fields() -> None:
+    """Materialise the `fund` field on GL Entry and every posting doctype now."""
+    from erpnext.accounts.doctype.accounting_dimension.accounting_dimension import (
+        make_dimension_in_accounting_doctypes,
     )
-    dimension.flags.ignore_permissions = True
-    dimension.insert()
+
+    dimension = frappe.get_doc("Accounting Dimension", DIMENSION_DOCTYPE)
+    make_dimension_in_accounting_doctypes(doc=dimension)
+    frappe.clear_cache()
+
+
+def fund_field_exists() -> bool:
+    """True once the Fund dimension has created its GL Entry field."""
+    return bool(frappe.db.exists("Custom Field", {"dt": "GL Entry", "fieldname": "fund"}))
 
 
 def set_fund_mandatory(company: str, default_fund: str | None = None) -> None:

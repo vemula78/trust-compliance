@@ -12,6 +12,7 @@ import frappe
 from frappe import _
 
 from trust_compliance.core.segregation import validate_fund_segregation
+from trust_compliance.setup.accounting_dimension import fund_field_exists
 
 #: Voucher types whose GL entries carry no fund dimension by design and must not
 #: be blocked. Period Closing Voucher closes income and expenditure into retained
@@ -60,10 +61,13 @@ def enforce_on_submitted_voucher(doc, method=None) -> None:
     if doc.doctype in EXEMPT_VOUCHER_TYPES:
         return
 
-    # The dimension only exists once the Accounting Dimension has been created;
-    # during install, or if an administrator disables it, there is nothing to check.
-    if not _fund_field_exists():
+    funds = _fund_master(getattr(doc, "company", None))
+    if not funds:
+        # No fund master yet, so there is no FCRA wall to protect. This is the
+        # only condition under which enforcement legitimately does nothing.
         return
+
+    _require_fund_dimension()
 
     gl_entries = frappe.get_all(
         "GL Entry",
@@ -75,11 +79,6 @@ def enforce_on_submitted_voucher(doc, method=None) -> None:
         fields=["account", "fund", "debit", "credit"],
     )
     if not gl_entries:
-        return
-
-    company = getattr(doc, "company", None)
-    funds = _fund_master(company)
-    if not funds:
         return
 
     accounts = _accounts_by_name({row["account"] for row in gl_entries if row["account"]})
@@ -95,9 +94,6 @@ def enforce_on_journal_entry_draft(doc, method=None) -> None:
     journal reports the problem while it is still a draft rather than only when
     the accountant tries to submit it.
     """
-    if not _fund_field_exists():
-        return
-
     rows = doc.get("accounts") or []
     if not rows:
         return
@@ -105,6 +101,8 @@ def enforce_on_journal_entry_draft(doc, method=None) -> None:
     funds = _fund_master(getattr(doc, "company", None))
     if not funds:
         return
+
+    _require_fund_dimension()
 
     accounts = _accounts_by_name({row.account for row in rows if row.get("account")})
     lines = [
@@ -145,10 +143,28 @@ def validate_account_flags(doc, method=None) -> None:
             )
 
 
-def _fund_field_exists() -> bool:
-    """True once the Fund accounting dimension has created its GL Entry field."""
-    return bool(
-        frappe.db.exists(
-            "Custom Field", {"dt": "GL Entry", "fieldname": "fund"}
-        )
+def _require_fund_dimension() -> None:
+    """Fail closed when the fund dimension is missing but funds are configured.
+
+    ERPNext materialises a dimension's fields through a background job. If that
+    job never ran - a down worker on a fresh install - GL Entry has no `fund`
+    column, every line reads as untagged, and segregation would appear to pass on
+    a voucher that actually mixes foreign and domestic money.
+
+    Silently skipping the check in that state is the worst available behaviour,
+    because the accounts team is told the wall is enforced when it is not. So
+    posting is refused instead, with the one-line remediation.
+    """
+    if fund_field_exists():
+        return
+
+    frappe.throw(
+        _(
+            "The Fund accounting dimension has not been applied to GL Entry, so "
+            "FCRA segregation cannot be verified and posting is blocked. Run "
+            "<code>bench --site &lt;site&gt; execute "
+            "trust_compliance.setup.accounting_dimension.ensure_dimension_fields</code> "
+            "to finish the setup."
+        ),
+        title=_("FCRA Segregation Unavailable"),
     )
