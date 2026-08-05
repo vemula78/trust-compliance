@@ -43,6 +43,15 @@ doc_events = {
     "Account": {
         "validate": "trust_compliance.fcra.validate_account_flags",
     },
+    # A property-tax demand's Paid status is derived from its invoice's outstanding
+    # amount rather than set by hand, so the register cannot claim a demand is paid
+    # when the ledger says otherwise.
+    "Purchase Invoice": {
+        "on_update_after_submit": (
+            "trust_compliance.trust_compliance.doctype.property_tax_schedule"
+            ".property_tax_schedule.on_purchase_invoice_update"
+        ),
+    },
 }
 
 fixtures = [

@@ -1,0 +1,228 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "naming_series:",
+ "creation": "2026-08-05 00:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "naming_series",
+  "property_name",
+  "company",
+  "property_type",
+  "column_break_head",
+  "status",
+  "donor",
+  "donation",
+  "donation_date",
+  "section_location",
+  "address",
+  "survey_number",
+  "municipality",
+  "column_break_location",
+  "extent",
+  "extent_uom",
+  "khata_number",
+  "section_value",
+  "valuation",
+  "valuation_date",
+  "fund",
+  "column_break_value",
+  "asset",
+  "guideline_value",
+  "section_notes",
+  "notes"
+ ],
+ "fields": [
+  {
+   "default": "PROP-.####",
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Series",
+   "options": "PROP-.####",
+   "reqd": 1
+  },
+  {
+   "fieldname": "property_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Property Name",
+   "reqd": 1
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "in_standard_filter": 1,
+   "label": "Company",
+   "options": "Company",
+   "reqd": 1
+  },
+  {
+   "default": "Land",
+   "fieldname": "property_type",
+   "fieldtype": "Select",
+   "in_standard_filter": 1,
+   "label": "Property Type",
+   "options": "Land\nBuilding\nLand and Building\nFlat\nOther",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_head",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "Active",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Status",
+   "options": "Active\nUnder Dispute\nDisposed",
+   "reqd": 1
+  },
+  {
+   "fieldname": "donor",
+   "fieldtype": "Link",
+   "label": "Donated By",
+   "options": "Trust Donor",
+   "description": "The devotee who donated the property. Left blank for a property the Trust purchased."
+  },
+  {
+   "fieldname": "donation",
+   "fieldtype": "Link",
+   "label": "Donation Receipt",
+   "options": "Trust Donation",
+   "description": "The in-kind donation this property was recorded through, if any."
+  },
+  {
+   "fieldname": "donation_date",
+   "fieldtype": "Date",
+   "label": "Donation / Acquisition Date"
+  },
+  {
+   "fieldname": "section_location",
+   "fieldtype": "Section Break",
+   "label": "Location"
+  },
+  {
+   "fieldname": "address",
+   "fieldtype": "Small Text",
+   "label": "Address"
+  },
+  {
+   "fieldname": "survey_number",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Survey Number",
+   "description": "Survey / plot number as it appears in the revenue records."
+  },
+  {
+   "fieldname": "municipality",
+   "fieldtype": "Link",
+   "label": "Municipality",
+   "options": "Supplier",
+   "description": "The local body that levies property tax. Property tax is billed to and paid through this supplier, so it flows through Accounts Payable."
+  },
+  {
+   "fieldname": "column_break_location",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "extent",
+   "fieldtype": "Float",
+   "label": "Extent",
+   "precision": "4"
+  },
+  {
+   "default": "Sq Ft",
+   "fieldname": "extent_uom",
+   "fieldtype": "Select",
+   "label": "Extent UOM",
+   "options": "Sq Ft\nSq M\nAcre\nGuntha\nCent"
+  },
+  {
+   "fieldname": "khata_number",
+   "fieldtype": "Data",
+   "label": "Khata / Property ID"
+  },
+  {
+   "fieldname": "section_value",
+   "fieldtype": "Section Break",
+   "label": "Valuation"
+  },
+  {
+   "fieldname": "valuation",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Recorded Valuation",
+   "options": "Company:company:default_currency",
+   "description": "The value the property was brought into the books at."
+  },
+  {
+   "fieldname": "valuation_date",
+   "fieldtype": "Date",
+   "label": "Valuation Date"
+  },
+  {
+   "fieldname": "fund",
+   "fieldtype": "Link",
+   "label": "Fund",
+   "options": "Fund",
+   "reqd": 1,
+   "description": "The fund that holds this property. Tax and maintenance on it post against this fund."
+  },
+  {
+   "fieldname": "column_break_value",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "asset",
+   "fieldtype": "Link",
+   "label": "Fixed Asset",
+   "options": "Asset",
+   "description": "The ERPNext Asset record, where one exists."
+  },
+  {
+   "fieldname": "guideline_value",
+   "fieldtype": "Currency",
+   "label": "Guideline / Market Value",
+   "options": "Company:company:default_currency",
+   "description": "For information only. Never posted: the books carry the recorded valuation."
+  },
+  {
+   "fieldname": "section_notes",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "notes",
+   "fieldtype": "Text",
+   "label": "Notes"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [
+  {"group": "Tax", "link_doctype": "Property Tax Schedule", "link_fieldname": "property"},
+  {"group": "Maintenance", "link_doctype": "Property Maintenance", "link_fieldname": "property"}
+ ],
+ "modified": "2026-08-05 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Trust Compliance",
+ "name": "Trust Property",
+ "naming_rule": "By \"Naming Series\" field",
+ "owner": "Administrator",
+ "permissions": [
+  {"create": 1, "delete": 1, "email": 1, "export": 1, "print": 1, "read": 1,
+   "report": 1, "role": "Accounts Manager", "share": 1, "write": 1},
+  {"create": 1, "email": 1, "export": 1, "print": 1, "read": 1, "report": 1,
+   "role": "Accounts User", "share": 1, "write": 1},
+  {"read": 1, "report": 1, "export": 1, "role": "Auditor"}
+ ],
+ "row_format": "Dynamic",
+ "search_fields": "property_name,survey_number",
+ "sort_field": "property_name",
+ "sort_order": "ASC",
+ "states": [],
+ "title_field": "property_name",
+ "track_changes": 1
+}

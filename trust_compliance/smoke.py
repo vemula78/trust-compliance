@@ -15,6 +15,7 @@ deployment.
 from __future__ import annotations
 
 import frappe
+from frappe.utils import flt
 
 from trust_compliance.install import seed_trust_funds
 from trust_compliance.setup.accounting_dimension import (
@@ -82,6 +83,23 @@ def _reset() -> None:
     for donation in frappe.get_all("Trust Donation", filters={"company": COMPANY},
                                    fields=["name", "docstatus"]):
         doc = frappe.get_doc("Trust Donation", donation.name)
+        if doc.docstatus == 1:
+            doc.flags.ignore_permissions = True
+            doc.cancel()
+        doc.delete(ignore_permissions=True, force=True)
+
+    for doctype in ("Property Tax Schedule", "Property Maintenance"):
+        for row in frappe.get_all(doctype, filters={"company": COMPANY},
+                                  fields=["name", "docstatus"]):
+            doc = frappe.get_doc(doctype, row.name)
+            if doc.docstatus == 1:
+                doc.flags.ignore_permissions = True
+                doc.cancel()
+            doc.delete(ignore_permissions=True, force=True)
+
+    for row in frappe.get_all("Purchase Invoice", filters={"company": COMPANY},
+                              fields=["name", "docstatus"]):
+        doc = frappe.get_doc("Purchase Invoice", row.name)
         if doc.docstatus == 1:
             doc.flags.ignore_permissions = True
             doc.cancel()
@@ -276,6 +294,111 @@ def _check_fund_transfers() -> None:
     )
 
 
+def _check_property_register() -> None:
+    print("\n--- property register ---")
+
+    if not frappe.db.exists("Supplier", "Whitefield Municipality"):
+        supplier = frappe.get_doc({
+            "doctype": "Supplier", "supplier_name": "Whitefield Municipality",
+            "supplier_group": frappe.db.get_value("Supplier Group", {"is_group": 0}, "name"),
+            "is_municipality": 1,
+        })
+        supplier.flags.ignore_permissions = True
+        supplier.insert()
+
+    prop_name = frappe.db.get_value("Trust Property",
+                                    {"property_name": "Devotee House, Whitefield"})
+    if not prop_name:
+        prop = frappe.get_doc({
+            "doctype": "Trust Property", "company": COMPANY,
+            "property_name": "Devotee House, Whitefield",
+            "property_type": "Land and Building", "status": "Active",
+            "fund": "HOSP", "municipality": "Whitefield Municipality",
+            "survey_number": "112/4A", "extent": 4800, "extent_uom": "Sq Ft",
+            "valuation": 9_500_000, "valuation_date": "2026-05-01",
+            "donation_date": "2026-05-01", "address": "EPIP Area, Whitefield, Bangalore",
+        })
+        prop.flags.ignore_permissions = True
+        prop.insert()
+        prop_name = prop.name
+    _check(bool(prop_name), f"property created ({prop_name})")
+
+    tax = frappe.get_doc({
+        "doctype": "Property Tax Schedule", "property": prop_name,
+        "financial_year": "2026-27", "amount": 42_000, "due_date": "2026-09-30",
+    })
+    tax.flags.ignore_permissions = True
+    tax.insert()
+    tax.submit()
+    tax.reload()
+
+    _check(bool(tax.purchase_invoice),
+           f"tax demand raised a Purchase Invoice ({tax.purchase_invoice})")
+    _check(tax.status == "Billed", f"demand status is Billed (got {tax.status})")
+    _check(tax.period_from == frappe.utils.getdate("2026-04-01")
+           and tax.period_to == frappe.utils.getdate("2027-03-31"),
+           "assessment period defaulted to the financial year")
+
+    invoice = frappe.get_doc("Purchase Invoice", tax.purchase_invoice)
+    _check(invoice.supplier == "Whitefield Municipality",
+           "invoice is raised on the municipality, so the demand sits in payables")
+    _check(flt(invoice.outstanding_amount) == 42_000,
+           f"demand is outstanding in AP at 42,000 (got {invoice.outstanding_amount})")
+
+    gl = frappe.get_all("GL Entry",
+                        filters={"voucher_no": tax.purchase_invoice, "is_cancelled": 0},
+                        fields=["account", "debit", "credit", "fund"])
+    _check(any(flt(row.debit) == 42_000 and row.fund == "HOSP" for row in gl),
+           "property tax expense is tagged to the property's fund (HOSP)")
+    _check(any(flt(row.credit) == 42_000 for row in gl),
+           "payable is credited, not cash")
+
+    _expect_refusal(
+        "a second tax demand for the same property and year",
+        lambda: frappe.get_doc({
+            "doctype": "Property Tax Schedule", "property": prop_name,
+            "financial_year": "2026-27", "amount": 42_000, "due_date": "2026-09-30",
+        }).insert(ignore_permissions=True).submit(),
+    )
+
+    maintenance = frappe.get_doc({
+        "doctype": "Property Maintenance", "property": prop_name,
+        "maintenance_type": "Repair", "description": "Compound wall repair",
+        "start_date": "2026-07-01", "end_date": "2026-07-20", "amount": 65_000,
+        "status": "Completed",
+    })
+    maintenance.flags.ignore_permissions = True
+    maintenance.insert()
+    maintenance.submit()
+    _check(maintenance.fund == "HOSP", "maintenance inherits the property's fund")
+
+    _expect_refusal(
+        "an AMC with no end date",
+        lambda: frappe.get_doc({
+            "doctype": "Property Maintenance", "property": prop_name,
+            "maintenance_type": "AMC", "description": "Lift AMC",
+            "start_date": "2026-07-01", "status": "Open",
+        }).insert(ignore_permissions=True),
+    )
+    _expect_refusal(
+        "maintenance completed with no end date",
+        lambda: frappe.get_doc({
+            "doctype": "Property Maintenance", "property": prop_name,
+            "maintenance_type": "Repair", "description": "Painting",
+            "start_date": "2026-07-01", "status": "Completed",
+        }).insert(ignore_permissions=True),
+    )
+
+    from trust_compliance.trust_compliance.doctype.trust_property.trust_property import (
+        get_property_summary,
+    )
+    summary = get_property_summary(prop_name)
+    _check(flt(summary["tax"]["outstanding"]) == 42_000,
+           f"property summary shows 42,000 tax outstanding (got {summary['tax']['outstanding']})")
+    _check(flt(summary["maintenance"]["total"]) == 65_000,
+           f"property summary shows 65,000 maintenance (got {summary['maintenance']['total']})")
+
+
 def _gl_rows() -> list[dict]:
     """Live GL entries joined to their account's root type and admin flag.
 
@@ -379,6 +502,7 @@ REPORTS = [
     "FCRA Register",
     "Income Application",
     "Form 10BD Statement",
+    "Property Register",
 ]
 
 
@@ -397,8 +521,12 @@ def _check_query_reports(context: dict) -> None:
     for report_name in REPORTS:
         _check(bool(frappe.db.exists("Report", report_name)),
                f"report {report_name!r} is registered")
+        report_filters = (
+            {"company": COMPANY} if report_name == "Property Register" else filters
+        )
         try:
-            result = run_query_report(report_name, filters=filters, ignore_prepared_report=True)
+            result = run_query_report(report_name, filters=report_filters,
+                                      ignore_prepared_report=True)
             columns, data = result.get("columns") or [], result.get("result") or []
             _check(bool(columns) and bool(data),
                    f"report {report_name!r} returns {len(columns)} columns "
@@ -638,6 +766,7 @@ def run() -> int:
         _check(False, f"wholly FCRA journal entry posts -- {_first_line(str(exc))}")
 
     _check_fund_transfers()
+    _check_property_register()
     _check_reports()
     _check_query_reports(context)
 
