@@ -125,22 +125,30 @@ def _message(summary: dict, company: str) -> str:
 
 
 def _columns() -> list[dict]:
+    """Amounts before free text.
+
+    This report has nine columns and its purpose is the money. With the
+    descriptive columns first, Received and Utilised fall off the right edge of a
+    1280px screen and the reader has to scroll horizontally to see any figure -
+    so the amounts sit immediately after the identifying columns, and Country and
+    Purpose (long, and only populated on some rows) go last.
+    """
     currency_options = "Company:company:default_currency"
     return [
         {"fieldname": "particulars", "label": _("Particulars"), "fieldtype": "Data",
-         "width": 280},
+         "width": 230},
         {"fieldname": "reference", "label": _("Reference"), "fieldtype": "Data",
-         "width": 150},
-        {"fieldname": "posting_date", "label": _("Date"), "fieldtype": "Date", "width": 100},
-        {"fieldname": "country", "label": _("Country"), "fieldtype": "Data", "width": 120},
+         "width": 135},
+        {"fieldname": "posting_date", "label": _("Date"), "fieldtype": "Date", "width": 90},
         {"fieldname": "fund", "label": _("Fund"), "fieldtype": "Link", "options": "Fund",
-         "width": 110},
-        {"fieldname": "purpose", "label": _("Purpose / Remarks"), "fieldtype": "Data",
-         "width": 220},
+         "width": 100},
         {"fieldname": "received", "label": _("Received"), "fieldtype": "Currency",
-         "options": currency_options, "width": 140},
+         "options": currency_options, "width": 130},
         {"fieldname": "utilised", "label": _("Utilised"), "fieldtype": "Currency",
-         "options": currency_options, "width": 140},
+         "options": currency_options, "width": 130},
         {"fieldname": "administrative", "label": _("Admin"), "fieldtype": "Data",
-         "width": 80},
+         "width": 70},
+        {"fieldname": "country", "label": _("Country"), "fieldtype": "Data", "width": 110},
+        {"fieldname": "purpose", "label": _("Purpose / Remarks"), "fieldtype": "Data",
+         "width": 200},
     ]

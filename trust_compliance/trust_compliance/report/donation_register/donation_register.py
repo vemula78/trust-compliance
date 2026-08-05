@@ -97,24 +97,26 @@ def _chart(rows: list[dict]) -> dict:
 
 
 def _columns() -> list[dict]:
+    """Amount early, long free-text last, for the same reason as the FCRA register:
+    a twelve-column register must not push its money off the right edge."""
     return [
-        {"fieldname": "donation", "label": _("Donation"), "fieldtype": "Link",
-         "options": "Trust Donation", "width": 130},
         {"fieldname": "receipt_no", "label": _("Receipt No"), "fieldtype": "Data",
-         "width": 150},
+         "width": 145},
         {"fieldname": "donation_date", "label": _("Date"), "fieldtype": "Date",
-         "width": 100},
-        {"fieldname": "donor", "label": _("Donor"), "fieldtype": "Link",
-         "options": "Trust Donor", "width": 130},
+         "width": 95},
         {"fieldname": "donor_name", "label": _("Donor Name"), "fieldtype": "Data",
-         "width": 190},
-        {"fieldname": "donor_type", "label": _("Type"), "fieldtype": "Data", "width": 100},
-        {"fieldname": "pan", "label": _("PAN"), "fieldtype": "Data", "width": 110},
-        {"fieldname": "fund", "label": _("Fund"), "fieldtype": "Link", "options": "Fund",
-         "width": 110},
-        {"fieldname": "mode", "label": _("Mode"), "fieldtype": "Data", "width": 90},
-        {"fieldname": "kind", "label": _("Nature"), "fieldtype": "Data", "width": 90},
-        {"fieldname": "purpose", "label": _("Purpose"), "fieldtype": "Data", "width": 220},
+         "width": 175},
         {"fieldname": "amount", "label": _("Amount"), "fieldtype": "Currency",
-         "options": "Company:company:default_currency", "width": 140},
+         "options": "Company:company:default_currency", "width": 130},
+        {"fieldname": "fund", "label": _("Fund"), "fieldtype": "Link", "options": "Fund",
+         "width": 100},
+        {"fieldname": "mode", "label": _("Mode"), "fieldtype": "Data", "width": 85},
+        {"fieldname": "kind", "label": _("Nature"), "fieldtype": "Data", "width": 85},
+        {"fieldname": "pan", "label": _("PAN"), "fieldtype": "Data", "width": 110},
+        {"fieldname": "donor_type", "label": _("Type"), "fieldtype": "Data", "width": 95},
+        {"fieldname": "purpose", "label": _("Purpose"), "fieldtype": "Data", "width": 200},
+        {"fieldname": "donor", "label": _("Donor"), "fieldtype": "Link",
+         "options": "Trust Donor", "width": 120},
+        {"fieldname": "donation", "label": _("Donation"), "fieldtype": "Link",
+         "options": "Trust Donation", "width": 125},
     ]

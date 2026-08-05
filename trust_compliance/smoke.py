@@ -87,6 +87,14 @@ def _reset() -> None:
             doc.cancel()
         doc.delete(ignore_permissions=True, force=True)
 
+    for transfer in frappe.get_all("Fund Transfer", filters={"company": COMPANY},
+                                   fields=["name", "docstatus"]):
+        doc = frappe.get_doc("Fund Transfer", transfer.name)
+        if doc.docstatus == 1:
+            doc.flags.ignore_permissions = True
+            doc.cancel()
+        doc.delete(ignore_permissions=True, force=True)
+
     for entry in frappe.get_all("Journal Entry", filters={"company": COMPANY},
                                 fields=["name", "docstatus"]):
         doc = frappe.get_doc("Journal Entry", entry.name)
@@ -207,6 +215,67 @@ def _journal(rows, posting_date="2026-06-20"):
 # ---------------------------------------------------------------------------
 
 
+def _transfer(**kwargs):
+    doc = frappe.get_doc({
+        "doctype": "Fund Transfer", "company": COMPANY,
+        "transfer_date": kwargs.pop("transfer_date", "2026-06-25"),
+        "reason": kwargs.pop("reason", "Board resolution dated 20-Jun-2026"),
+        **kwargs,
+    })
+    doc.flags.ignore_permissions = True
+    doc.insert()
+    doc.submit()
+    return doc.reload()
+
+
+def _check_fund_transfers() -> None:
+    print("\n--- fund transfers ---")
+
+    transfer = _transfer(from_fund="GEN", to_fund="HOSP", amount=25_000)
+    gl = frappe.get_all("GL Entry",
+                        filters={"voucher_no": transfer.journal_entry, "is_cancelled": 0},
+                        fields=["account", "debit", "credit", "fund"])
+    _check(len(gl) == 2, f"transfer posted two GL rows (got {len(gl)})")
+    _check(len({row.account for row in gl}) == 1,
+           "both legs sit on the same equity clearing account")
+    _check(sum(row.debit for row in gl) == sum(row.credit for row in gl) == 25_000,
+           "transfer entry is balanced at 25,000")
+    _check(any(row.fund == "GEN" and row.debit == 25_000 for row in gl),
+           "source fund carries the debit leg")
+    _check(any(row.fund == "HOSP" and row.credit == 25_000 for row in gl),
+           "destination fund carries the credit leg")
+
+    _expect_refusal(
+        "transferring out of a Corpus fund",
+        lambda: _transfer(from_fund="CORPUS", to_fund="GEN", amount=1_000),
+    )
+    _expect_refusal(
+        "transferring from a domestic fund into an FCRA fund",
+        lambda: _transfer(from_fund="GEN", to_fund="FCRA-GEN", amount=1_000),
+    )
+    _expect_refusal(
+        "transferring from an FCRA fund into a domestic fund",
+        lambda: _transfer(from_fund="FCRA-GEN", to_fund="GEN", amount=1_000),
+    )
+    _expect_refusal(
+        "transferring a fund to itself",
+        lambda: _transfer(from_fund="GEN", to_fund="GEN", amount=1_000),
+    )
+
+    # Transfers into corpus are legitimate: capital may be added, not withdrawn.
+    try:
+        _transfer(from_fund="GEN", to_fund="CORPUS", amount=5_000)
+        _check(True, "transferring into a Corpus fund is allowed")
+    except Exception as exc:  # noqa: BLE001
+        _check(False, f"transferring into a Corpus fund -- {_first_line(str(exc))}")
+
+    _check(
+        not frappe.db.exists("Custom Field",
+                             {"dt": "Fund Transfer", "fieldname": "fund"}),
+        "Fund Transfer is not itself dimension-tagged (it posts a Journal Entry)",
+    )
+
+
 def _gl_rows() -> list[dict]:
     """Live GL entries joined to their account's root type and admin flag.
 
@@ -250,10 +319,18 @@ def _check_reports() -> None:
            f"GEN inflow is 60,000 this year (got {by_fund['GEN']['inflow']})")
     _check(by_fund["GEN"]["opening"] == 1_000,
            f"GEN opening carries the 2025-26 donation (got {by_fund['GEN']['opening']})")
-    _check(by_fund["CORPUS"]["balance"] == 500_000,
-           f"CORPUS balance is 500,000 (got {by_fund['CORPUS']['balance']})")
-    _check(by_fund["HOSP"]["inflow"] == 2_000,
-           f"HOSP inflow from the manual journal is 2,000 (got {by_fund['HOSP']['inflow']})")
+    # 5,00,000 corpus donation plus a 5,000 transfer in.
+    _check(by_fund["CORPUS"]["balance"] == 505_000,
+           f"CORPUS balance is 505,000 (got {by_fund['CORPUS']['balance']})")
+    # 2,000 manual journal plus a 25,000 transfer in.
+    _check(by_fund["HOSP"]["inflow"] == 27_000,
+           f"HOSP inflow is 27,000 incl. transfer (got {by_fund['HOSP']['inflow']})")
+    # 25,000 + 5,000 transferred out of GEN; transfers net to zero overall.
+    _check(by_fund["GEN"]["outflow"] == 30_000,
+           f"GEN outflow is 30,000 from transfers (got {by_fund['GEN']['outflow']})")
+    _check(report["total_inflow"] - report["total_outflow"]
+           == report["total_balance"] - report["total_opening"],
+           "transfers net to zero across all funds")
 
     # FCRA fund: 100,000 received, 3,000 spent on an administrative account.
     _check(by_fund["FCRA-GEN"]["inflow"] == 100_000,
@@ -538,6 +615,7 @@ def run() -> int:
     except Exception as exc:  # noqa: BLE001
         _check(False, f"wholly FCRA journal entry posts -- {_first_line(str(exc))}")
 
+    _check_fund_transfers()
     _check_reports()
     _check_query_reports(context)
 

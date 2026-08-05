@@ -1,0 +1,198 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "naming_series:",
+ "creation": "2026-08-05 00:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "is_submittable": 1,
+ "field_order": [
+  "naming_series",
+  "company",
+  "transfer_date",
+  "column_break_head",
+  "amount",
+  "amount_in_words",
+  "section_funds",
+  "from_fund",
+  "from_fund_class",
+  "column_break_funds",
+  "to_fund",
+  "to_fund_class",
+  "section_reason",
+  "reason",
+  "section_gl",
+  "journal_entry",
+  "column_break_gl",
+  "amended_from"
+ ],
+ "fields": [
+  {
+   "default": "FT-.YYYY.-",
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Series",
+   "options": "FT-.YYYY.-",
+   "reqd": 1
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "in_standard_filter": 1,
+   "label": "Company",
+   "options": "Company",
+   "reqd": 1
+  },
+  {
+   "fieldname": "transfer_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Transfer Date",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_head",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "amount",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Amount",
+   "options": "Company:company:default_currency",
+   "reqd": 1
+  },
+  {
+   "fieldname": "amount_in_words",
+   "fieldtype": "Small Text",
+   "label": "Amount in Words",
+   "read_only": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "section_funds",
+   "fieldtype": "Section Break",
+   "label": "Funds"
+  },
+  {
+   "fieldname": "from_fund",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "From Fund",
+   "options": "Fund",
+   "reqd": 1,
+   "description": "Corpus cannot be transferred out: it is capital of the Trust, not spendable income."
+  },
+  {
+   "fetch_from": "from_fund.fund_class",
+   "fieldname": "from_fund_class",
+   "fieldtype": "Data",
+   "label": "From Fund Class",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_funds",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "to_fund",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "To Fund",
+   "options": "Fund",
+   "reqd": 1
+  },
+  {
+   "fetch_from": "to_fund.fund_class",
+   "fieldname": "to_fund_class",
+   "fieldtype": "Data",
+   "label": "To Fund Class",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_reason",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "reason",
+   "fieldtype": "Small Text",
+   "label": "Reason",
+   "reqd": 1,
+   "description": "Why the Trust is reallocating this money. Required: a transfer between funds changes what money is available for, and the trustees' minute is the authority for it."
+  },
+  {
+   "fieldname": "section_gl",
+   "fieldtype": "Section Break",
+   "label": "Accounting"
+  },
+  {
+   "fieldname": "journal_entry",
+   "fieldtype": "Link",
+   "label": "Journal Entry",
+   "options": "Journal Entry",
+   "read_only": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "column_break_gl",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Fund Transfer",
+   "print_hide": 1,
+   "read_only": 1
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-08-05 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Trust Compliance",
+ "name": "Fund Transfer",
+ "naming_rule": "By \"Naming Series\" field",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "amend": 1,
+   "cancel": 1,
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Accounts Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Accounts User",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "read": 1,
+   "report": 1,
+   "export": 1,
+   "role": "Auditor"
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "transfer_date",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}
