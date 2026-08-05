@@ -403,6 +403,19 @@ def _check_query_reports(context: dict) -> None:
             _check(bool(columns) and bool(data),
                    f"report {report_name!r} returns {len(columns)} columns "
                    f"and {len(data)} rows")
+            # Shape matters as much as content: Frappe's execute() contract is
+            # (columns, data, message, chart, report_summary). Returning a chart
+            # in the report_summary position makes the desk try to iterate it and
+            # the report renders completely blank while this call still looks
+            # healthy - so the shape is asserted, not just the payload.
+            summary = result.get("report_summary")
+            _check(summary is None or isinstance(summary, list),
+                   f"report {report_name!r} report_summary is a list or None "
+                   f"(got {type(summary).__name__})")
+            chart = result.get("chart")
+            _check(chart is None or isinstance(chart, dict),
+                   f"report {report_name!r} chart is a dict or None "
+                   f"(got {type(chart).__name__})")
         except Exception as exc:  # noqa: BLE001
             _check(False, f"report {report_name!r} -- {_first_line(str(exc))}")
 

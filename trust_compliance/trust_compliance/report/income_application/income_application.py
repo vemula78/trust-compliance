@@ -58,7 +58,7 @@ def execute(filters: dict | None = None):
         },
     ]
 
-    return _columns(), data, _message(report, company), None, None
+    return _columns(), data, _message(report, company)
 
 
 def _message(report: dict, company: str) -> str:

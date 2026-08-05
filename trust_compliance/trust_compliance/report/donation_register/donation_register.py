@@ -45,7 +45,10 @@ def execute(filters: dict | None = None):
         for row in rows
     ]
 
-    return _columns(), data, _message(report["summary"], company), None, _chart(rows)
+    # Frappe's contract is (columns, data, message, chart, report_summary).
+    # The chart must sit in position 4; putting it in position 5 makes the desk
+    # try to iterate it as a report-summary list and the report renders blank.
+    return _columns(), data, _message(report["summary"], company), _chart(rows)
 
 
 def _message(summary: dict, company: str) -> str:

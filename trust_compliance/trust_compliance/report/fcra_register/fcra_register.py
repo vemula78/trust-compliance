@@ -83,7 +83,7 @@ def execute(filters: dict | None = None):
         data.append({"particulars": label, "received": value, "indent": 1,
                      "bold": 1 if label == _("Closing balance") else 0})
 
-    return _columns(), data, _message(summary, company), None, None
+    return _columns(), data, _message(summary, company)
 
 
 def _message(summary: dict, company: str) -> str:
