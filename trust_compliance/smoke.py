@@ -70,6 +70,35 @@ def _account(name: str, parent: str, root_type: str, account_type: str | None = 
     return doc.name
 
 
+def _reset() -> None:
+    """Remove the previous run's transactions so the check is re-runnable.
+
+    Without this the second run doubles every figure, and the absolute assertions
+    below fail while the ratio assertions still pass - which is exactly how a
+    non-idempotent test hides itself. Donations are cancelled first because
+    cancelling a donation cancels its Journal Entry; whatever is left is a journal
+    the test posted directly.
+    """
+    for donation in frappe.get_all("Trust Donation", filters={"company": COMPANY},
+                                   fields=["name", "docstatus"]):
+        doc = frappe.get_doc("Trust Donation", donation.name)
+        if doc.docstatus == 1:
+            doc.flags.ignore_permissions = True
+            doc.cancel()
+        doc.delete(ignore_permissions=True, force=True)
+
+    for entry in frappe.get_all("Journal Entry", filters={"company": COMPANY},
+                                fields=["name", "docstatus"]):
+        doc = frappe.get_doc("Journal Entry", entry.name)
+        if doc.docstatus == 1:
+            doc.flags.ignore_permissions = True
+            doc.cancel()
+        doc.delete(ignore_permissions=True, force=True)
+
+    frappe.db.delete("GL Entry", {"company": COMPANY})
+    frappe.db.commit()
+
+
 def _setup() -> dict:
     if not frappe.db.exists("Company", COMPANY):
         company = frappe.get_doc({
@@ -260,6 +289,7 @@ def _check_reports() -> None:
 def run() -> int:
     _results.clear()
     context = _setup()
+    _reset()
     accounts = context["accounts"]
 
     print("\n--- dimension ---")
