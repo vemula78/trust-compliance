@@ -328,9 +328,18 @@ def _check_reports() -> None:
     # 25,000 + 5,000 transferred out of GEN; transfers net to zero overall.
     _check(by_fund["GEN"]["outflow"] == 30_000,
            f"GEN outflow is 30,000 from transfers (got {by_fund['GEN']['outflow']})")
-    _check(report["total_inflow"] - report["total_outflow"]
-           == report["total_balance"] - report["total_opening"],
-           "transfers net to zero across all funds")
+    _check(
+        round(balances["total_opening"] + balances["total_inflow"]
+              - balances["total_outflow"], 2) == balances["total_balance"],
+        "fund totals reconcile: opening + inflow - outflow == closing",
+    )
+    # GEN -25,000 -5,000, HOSP +25,000, CORPUS +5,000: transfers cancel out.
+    _check(
+        round(sum(row["inflow"] for row in balances["rows"])
+              - sum(row["outflow"] for row in balances["rows"]), 2)
+        == balances["total_inflow"] - balances["total_outflow"],
+        "transfers net to zero across all funds",
+    )
 
     # FCRA fund: 100,000 received, 3,000 spent on an administrative account.
     _check(by_fund["FCRA-GEN"]["inflow"] == 100_000,
