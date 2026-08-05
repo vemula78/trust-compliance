@@ -152,6 +152,15 @@ def _setup() -> dict:
         year.flags.ignore_permissions = True
         year.insert()
 
+    # More setup-wizard fixtures a pwd/scratch site lacks: a Warehouse Type for
+    # company creation, and a UOM for the property-tax invoice line.
+    for doctype, name in (("Warehouse Type", "Transit"), ("UOM", "Nos")):
+        if not frappe.db.exists(doctype, name):
+            doc = frappe.get_doc({"doctype": doctype, "__newname": name,
+                                  **({"uom_name": name} if doctype == "UOM" else {})})
+            doc.flags.ignore_permissions = True
+            doc.insert()
+
     accounts = {
         "bank_account": _account("Domestic Bank", "Bank Accounts", "Asset", "Bank"),
         "fcra_bank_account": _account("FCRA Designated Bank", "Bank Accounts", "Asset",
