@@ -22,6 +22,22 @@ from trust_compliance.trust_compliance.doctype.trust_compliance_settings.trust_c
 BANK_MODES = frozenset({"Bank", "UPI", "Cheque"})
 
 
+def amount_in_words(amount, currency: str) -> str:
+    """Amount in words, spelling INR as "Rupees" rather than the currency code.
+
+    `frappe.utils.money_in_words` prefixes the ISO code, giving "INR Ten Thousand
+    only." On an 80G receipt the amount in words is the operative figure and is
+    read by donors and assessing officers, so it is spelled the way Indian
+    statutory documents spell it. Only the INR prefix is touched; every other
+    currency keeps Frappe's own wording.
+    """
+    words = money_in_words(amount, currency)
+    if currency == "INR" and words.startswith("INR "):
+        return "Rupees " + words[4:]
+    return words
+
+
+
 class TrustDonation(Document):
     # -- lifecycle ----------------------------------------------------------
 
@@ -34,7 +50,7 @@ class TrustDonation(Document):
         self._validate_cash_limits()
         self._validate_pan_requirement()
         self.financial_year = financial_year_of(self.donation_date)
-        self.amount_in_words = money_in_words(self.amount, self._currency())
+        self.amount_in_words = amount_in_words(self.amount, self._currency())
 
     def before_submit(self):
         self.receipt_no = self._allocate_receipt_no()

@@ -338,7 +338,7 @@ def _check_query_reports(context: dict) -> None:
                              filters={"company": COMPANY, "docstatus": 1,
                                       "is_corpus": 0},
                              fields=["name", "amount_in_words"], limit=1)[0]
-    _check("Rupee" in (receipt.amount_in_words or ""),
+    _check((receipt.amount_in_words or "").startswith("Rupees "),
            f"amount in words is set ({receipt.amount_in_words})")
 
     try:

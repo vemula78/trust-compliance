@@ -11,11 +11,14 @@ from __future__ import annotations
 
 import frappe
 from frappe import _
-from frappe.utils import fmt_money, money_in_words
+from frappe.utils import fmt_money
 
 from trust_compliance.core.compliance import build_form_10bd
 from trust_compliance.core.financial_year import financial_year_window, is_financial_year
 from trust_compliance.queries import donations
+from trust_compliance.trust_compliance.doctype.trust_donation.trust_donation import (
+    amount_in_words,
+)
 
 TEMPLATE = """
 <div class="cert">
@@ -177,7 +180,7 @@ def get_certificate_html(donor: str, financial_year: str) -> str:
             "rows": statement["rows"],
             "currency": currency,
             "total_formatted": fmt_money(total, currency=currency),
-            "total_in_words": money_in_words(total, currency),
+            "total_in_words": amount_in_words(total, currency),
             "reg": reg,
             "today": frappe.utils.nowdate(),
             "_": _,
