@@ -178,6 +178,85 @@ def _journal(rows, posting_date="2026-06-20"):
 # ---------------------------------------------------------------------------
 
 
+def _gl_rows() -> list[dict]:
+    """Live GL entries joined to their account's root type and admin flag.
+
+    This is the single query every report in `core/` is driven from, which is why
+    the reports cannot disagree with the ledger: there is no second source.
+    """
+    return frappe.db.sql(
+        """
+        SELECT gle.account, gle.debit, gle.credit, gle.fund, gle.posting_date,
+               gle.voucher_no, gle.remarks,
+               acc.root_type, acc.is_administrative
+        FROM `tabGL Entry` gle
+        JOIN `tabAccount` acc ON acc.name = gle.account
+        WHERE gle.company = %s AND gle.is_cancelled = 0
+        """,
+        (COMPANY,),
+        as_dict=True,
+    )
+
+
+def _check_reports() -> None:
+    """Drive the pure report builders from live GL and reconcile the totals."""
+    from trust_compliance.core.compliance import build_fcra_register
+    from trust_compliance.core.fund_balance import build_fund_balances
+
+    print("\n--- reports against live GL ---")
+    gl_rows = _gl_rows()
+    funds = frappe.get_all(
+        "Fund",
+        filters={"company": COMPANY},
+        fields=["name", "fund_name", "fund_class", "is_default", "is_fcra"],
+    )
+
+    balances = build_fund_balances(gl_rows, funds,
+                                   from_date="2026-04-01", to_date="2027-03-31")
+    by_fund = {row["fund"]: row for row in balances["rows"]}
+
+    # 50,000 + 10,000 domestic into GEN this year, and 1,000 in 2025-26 which must
+    # land in opening rather than in the year's inflow.
+    _check(by_fund["GEN"]["inflow"] == 60_000,
+           f"GEN inflow is 60,000 this year (got {by_fund['GEN']['inflow']})")
+    _check(by_fund["GEN"]["opening"] == 1_000,
+           f"GEN opening carries the 2025-26 donation (got {by_fund['GEN']['opening']})")
+    _check(by_fund["CORPUS"]["balance"] == 500_000,
+           f"CORPUS balance is 500,000 (got {by_fund['CORPUS']['balance']})")
+    _check(by_fund["HOSP"]["inflow"] == 2_000,
+           f"HOSP inflow from the manual journal is 2,000 (got {by_fund['HOSP']['inflow']})")
+
+    # FCRA fund: 100,000 received, 3,000 spent on an administrative account.
+    _check(by_fund["FCRA-GEN"]["inflow"] == 100_000,
+           f"FCRA-GEN inflow is 100,000 (got {by_fund['FCRA-GEN']['inflow']})")
+    _check(by_fund["FCRA-GEN"]["outflow"] == 3_000,
+           f"FCRA-GEN outflow is 3,000 (got {by_fund['FCRA-GEN']['outflow']})")
+
+    donations = frappe.get_all(
+        "Trust Donation",
+        filters={"company": COMPANY, "docstatus": 1},
+        fields=["name", "receipt_no", "donation_date", "donor", "donor_name",
+                "donor_type", "amount", "mode", "fund", "is_corpus", "is_anonymous",
+                "purpose"],
+    )
+    fcra = build_fcra_register(gl_rows, donations, funds,
+                               from_date="2026-04-01", to_date="2027-03-31")
+    summary = fcra["summary"]
+    _check(summary["receipts"] == 100_000,
+           f"FC-4 receipts are 100,000 (got {summary['receipts']})")
+    _check(summary["admin_utilized"] == 3_000,
+           f"administrative utilisation is 3,000 (got {summary['admin_utilized']})")
+    _check(summary["admin_percent"] == 3.0,
+           f"admin ratio is 3% of contribution received (got {summary['admin_percent']}%)")
+    _check(summary["admin_cap_exceeded"] is False, "20% FCRA admin cap not breached")
+    _check(summary["closing_balance"] == 97_000,
+           f"FCRA closing balance is 97,000 (got {summary['closing_balance']})")
+    _check(len(fcra["receipts"]) == 1 and fcra["receipts"][0]["amount"] == 100_000,
+           "FC-4 contributor detail lists exactly the one foreign donation")
+    _check(summary["donation_receipts"] == summary["journal_receipts"],
+           "register detail total reconciles to the GL-derived receipts figure")
+
+
 def run() -> int:
     _results.clear()
     context = _setup()
@@ -331,6 +410,8 @@ def run() -> int:
         _check(True, "wholly FCRA journal entry posts (administrative expense)")
     except Exception as exc:  # noqa: BLE001
         _check(False, f"wholly FCRA journal entry posts -- {_first_line(str(exc))}")
+
+    _check_reports()
 
     frappe.db.commit()
 
