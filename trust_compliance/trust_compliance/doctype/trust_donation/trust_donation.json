@@ -19,6 +19,7 @@
   "financial_year",
   "section_amount",
   "amount",
+  "amount_in_words",
   "mode",
   "fund",
   "column_break_amount",
@@ -114,6 +115,14 @@
    "label": "Amount",
    "reqd": 1,
    "options": "Company:company:default_currency"
+  },
+  {
+   "fieldname": "amount_in_words",
+   "fieldtype": "Small Text",
+   "label": "Amount in Words",
+   "read_only": 1,
+   "no_copy": 1,
+   "description": "Set on save. Printed on the 80G receipt, where the amount in words is the operative figure."
   },
   {
    "default": "Bank",

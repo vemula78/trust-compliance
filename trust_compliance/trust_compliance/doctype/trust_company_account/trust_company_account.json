@@ -14,7 +14,16 @@
   "bank_account",
   "fcra_bank_account",
   "property_tax_expense_account",
-  "receipt_prefix"
+  "receipt_prefix",
+  "section_registrations",
+  "trust_pan",
+  "registration_80g",
+  "registration_80g_date",
+  "column_break_registrations",
+  "registration_12ab",
+  "registration_fcra",
+  "authorised_signatory",
+  "signatory_designation"
  ],
  "fields": [
   {
@@ -85,6 +94,52 @@
    "fieldtype": "Data",
    "label": "Receipt Series Prefix",
    "description": "Receipts are numbered <prefix>/<financial year>/<sequence>, gap-free per financial year."
+  },
+  {
+   "fieldname": "section_registrations",
+   "fieldtype": "Section Break",
+   "label": "Statutory Registrations",
+   "description": "Printed on 80G receipts and Form 10BE certificates. A receipt without the 80G registration number and date is not valid for the donor's deduction."
+  },
+  {
+   "fieldname": "trust_pan",
+   "fieldtype": "Data",
+   "label": "Trust PAN",
+   "length": 10
+  },
+  {
+   "fieldname": "registration_80g",
+   "fieldtype": "Data",
+   "label": "80G Registration Number"
+  },
+  {
+   "fieldname": "registration_80g_date",
+   "fieldtype": "Date",
+   "label": "80G Registration Date"
+  },
+  {
+   "fieldname": "column_break_registrations",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "registration_12ab",
+   "fieldtype": "Data",
+   "label": "12A / 12AB Registration Number"
+  },
+  {
+   "fieldname": "registration_fcra",
+   "fieldtype": "Data",
+   "label": "FCRA Registration Number"
+  },
+  {
+   "fieldname": "authorised_signatory",
+   "fieldtype": "Data",
+   "label": "Authorised Signatory"
+  },
+  {
+   "fieldname": "signatory_designation",
+   "fieldtype": "Data",
+   "label": "Signatory Designation"
   }
  ],
  "index_web_pages_for_search": 1,

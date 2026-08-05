@@ -11,7 +11,7 @@ from __future__ import annotations
 import frappe
 from frappe import _
 from frappe.model.document import Document
-from frappe.utils import flt, fmt_money
+from frappe.utils import flt, fmt_money, money_in_words
 
 from trust_compliance.core.financial_year import financial_year_of, next_receipt_no
 from trust_compliance.trust_compliance.doctype.trust_compliance_settings.trust_compliance_settings import (
@@ -34,6 +34,7 @@ class TrustDonation(Document):
         self._validate_cash_limits()
         self._validate_pan_requirement()
         self.financial_year = financial_year_of(self.donation_date)
+        self.amount_in_words = money_in_words(self.amount, self._currency())
 
     def before_submit(self):
         self.receipt_no = self._allocate_receipt_no()

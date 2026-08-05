@@ -286,6 +286,89 @@ def _check_reports() -> None:
            "register detail total reconciles to the GL-derived receipts figure")
 
 
+REPORTS = [
+    "Fund Balances",
+    "Fund Income and Expenditure",
+    "Donation Register",
+    "FCRA Register",
+    "Income Application",
+    "Form 10BD Statement",
+]
+
+
+def _check_query_reports(context: dict) -> None:
+    """Run every shipped report end to end, as the desk runs them.
+
+    This is what catches a broken column definition, a filter the report does not
+    read, or a report registered in the wrong module - none of which the pure
+    tests can see, because none of them exist at that layer.
+    """
+    from frappe.desk.query_report import run as run_query_report
+
+    print("\n--- query reports ---")
+    filters = {"company": COMPANY, "financial_year": "2026-27"}
+
+    for report_name in REPORTS:
+        _check(bool(frappe.db.exists("Report", report_name)),
+               f"report {report_name!r} is registered")
+        try:
+            result = run_query_report(report_name, filters=filters, ignore_prepared_report=True)
+            columns, data = result.get("columns") or [], result.get("result") or []
+            _check(bool(columns) and bool(data),
+                   f"report {report_name!r} returns {len(columns)} columns "
+                   f"and {len(data)} rows")
+        except Exception as exc:  # noqa: BLE001
+            _check(False, f"report {report_name!r} -- {_first_line(str(exc))}")
+
+    # Filters must actually filter, not merely be accepted.
+    try:
+        unfiltered = run_query_report("Donation Register", filters=filters,
+                                      ignore_prepared_report=True)["result"]
+        corpus_only = run_query_report(
+            "Donation Register", filters={**filters, "fund": "CORPUS"},
+            ignore_prepared_report=True)["result"]
+        _check(len(corpus_only) < len(unfiltered) and len(corpus_only) == 1,
+               f"Donation Register fund filter narrows 4 rows to 1 "
+               f"(got {len(unfiltered)} -> {len(corpus_only)})")
+    except Exception as exc:  # noqa: BLE001
+        _check(False, f"Donation Register fund filter -- {_first_line(str(exc))}")
+
+    print("\n--- print output ---")
+    receipt = frappe.get_all("Trust Donation",
+                             filters={"company": COMPANY, "docstatus": 1,
+                                      "is_corpus": 0},
+                             fields=["name", "amount_in_words"], limit=1)[0]
+    _check("Rupee" in (receipt.amount_in_words or ""),
+           f"amount in words is set ({receipt.amount_in_words})")
+
+    try:
+        html = frappe.get_print("Trust Donation", receipt.name,
+                                print_format="80G Donation Receipt")
+        _check("80G" in html or "Receipt for Donation" in html,
+               "80G Donation Receipt print format renders")
+        _check(receipt.amount_in_words in html,
+               "receipt prints the amount in words")
+    except Exception as exc:  # noqa: BLE001
+        _check(False, f"80G receipt print format -- {_first_line(str(exc))}")
+
+    try:
+        from trust_compliance.form_10be import get_certificate_html
+
+        cert = get_certificate_html(context["domestic_donor"], "2026-27")
+        _check("FORM No. 10BE" in cert, "Form 10BE certificate renders")
+        # 50,000 bank + 10,000 UPI + 5,00,000 corpus in 2026-27 for this donor.
+        _check("560,000" in cert.replace("&nbsp;", " "),
+               "Form 10BE totals the donor's year at 5,60,000")
+    except Exception as exc:  # noqa: BLE001
+        _check(False, f"Form 10BE certificate -- {_first_line(str(exc))}")
+
+    _expect_refusal(
+        "Form 10BE for an anonymous donor",
+        lambda: __import__("trust_compliance.form_10be", fromlist=["x"])
+        .get_certificate_html(context["anonymous_donor"], "2026-27"),
+    )
+
+
 def run() -> int:
     _results.clear()
     context = _setup()
@@ -442,6 +525,7 @@ def run() -> int:
         _check(False, f"wholly FCRA journal entry posts -- {_first_line(str(exc))}")
 
     _check_reports()
+    _check_query_reports(context)
 
     frappe.db.commit()
 

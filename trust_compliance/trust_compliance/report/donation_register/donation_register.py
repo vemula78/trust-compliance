@@ -1,0 +1,120 @@
+"""Donation Register with Section 115BBC anonymous-donation monitoring."""
+
+from __future__ import annotations
+
+import frappe
+from frappe import _
+from frappe.utils import fmt_money
+
+from trust_compliance import queries
+from trust_compliance.core.compliance import build_donation_register
+
+
+def execute(filters: dict | None = None):
+    filters = filters or {}
+    company = filters["company"]
+    from_date, to_date = queries.window_for(filters)
+
+    report = build_donation_register(
+        queries.donations(company, from_date, to_date),
+        from_date=from_date,
+        to_date=to_date,
+    )
+
+    rows = report["rows"]
+    if filters.get("fund"):
+        rows = [row for row in rows if row.get("fund") == filters["fund"]]
+    if filters.get("mode"):
+        rows = [row for row in rows if row.get("mode") == filters["mode"]]
+
+    data = [
+        {
+            "donation": row.get("name"),
+            "receipt_no": row.get("receipt_no"),
+            "donation_date": row.get("donation_date"),
+            "donor": row.get("donor"),
+            "donor_name": _("Anonymous") if row.get("is_anonymous") else row.get("donor_name"),
+            "donor_type": row.get("donor_type"),
+            "pan": row.get("donor_pan"),
+            "fund": row.get("fund"),
+            "mode": row.get("mode"),
+            "purpose": row.get("purpose"),
+            "amount": row.get("amount"),
+            "kind": _("Corpus") if row.get("is_corpus") else _("Income"),
+        }
+        for row in rows
+    ]
+
+    return _columns(), data, _message(report["summary"], company), None, _chart(rows)
+
+
+def _message(summary: dict, company: str) -> str:
+    currency = frappe.get_cached_value("Company", company, "default_currency")
+
+    def money(value):
+        return fmt_money(value, currency=currency)
+
+    lines = [
+        _("{0} receipts totalling {1} - {2} income and {3} corpus.").format(
+            summary["count"], money(summary["total"]), money(summary["income"]),
+            money(summary["corpus"]),
+        ),
+        _(
+            "Section 115BBC: anonymous donations {0}, exempt limit {1} (the higher of "
+            "the statutory floor and 5% of total donations)."
+        ).format(money(summary["anonymous"]), money(summary["anonymous_exempt_limit"])),
+    ]
+
+    if summary["anonymous_threshold_breached"]:
+        lines.append(
+            "<b>"
+            + _(
+                "{0} of anonymous donations is taxable at the maximum marginal rate "
+                "under Section 115BBC."
+            ).format(money(summary["anonymous_taxable"]))
+            + "</b>"
+        )
+    else:
+        lines.append(_("Anonymous donations are within the exempt limit."))
+
+    return "<br>".join(lines)
+
+
+def _chart(rows: list[dict]) -> dict:
+    by_fund: dict[str, float] = {}
+    for row in rows:
+        fund = row.get("fund") or _("Untagged")
+        by_fund[fund] = by_fund.get(fund, 0) + (row.get("amount") or 0)
+
+    labels = sorted(by_fund)
+    return {
+        "data": {
+            "labels": labels,
+            "datasets": [{"name": _("Donations"), "values": [by_fund[key] for key in labels]}],
+        },
+        "type": "bar",
+    }
+
+
+def _columns() -> list[dict]:
+    return [
+        {"fieldname": "donation", "label": _("Donation"), "fieldtype": "Link",
+         "options": "Trust Donation", "width": 130},
+        {"fieldname": "receipt_no", "label": _("Receipt No"), "fieldtype": "Data",
+         "width": 150},
+        {"fieldname": "donation_date", "label": _("Date"), "fieldtype": "Date",
+         "width": 100},
+        {"fieldname": "donor", "label": _("Donor"), "fieldtype": "Link",
+         "options": "Trust Donor", "width": 130},
+        {"fieldname": "donor_name", "label": _("Donor Name"), "fieldtype": "Data",
+         "width": 190},
+        {"fieldname": "donor_type", "label": _("Type"), "fieldtype": "Data", "width": 100},
+        {"fieldname": "pan", "label": _("PAN"), "fieldtype": "Data", "width": 110},
+        {"fieldname": "fund", "label": _("Fund"), "fieldtype": "Link", "options": "Fund",
+         "width": 110},
+        {"fieldname": "mode", "label": _("Mode"), "fieldtype": "Data", "width": 90},
+        {"fieldname": "kind", "label": _("Nature"), "fieldtype": "Data", "width": 90},
+        {"fieldname": "purpose", "label": _("Purpose"), "fieldtype": "Data", "width": 220},
+        {"fieldname": "amount", "label": _("Amount"), "fieldtype": "Currency",
+         "options": "Company:company:default_currency", "width": 140},
+    ]
