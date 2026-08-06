@@ -362,6 +362,37 @@ def _check_property_register() -> None:
     _check(any(flt(row.credit) == 42_000 for row in gl),
            "payable is credited, not cash")
 
+    # Paying the demand must flip the register to Paid, derived from the invoice's
+    # outstanding amount rather than set by hand.
+    from erpnext.accounts.doctype.payment_entry.payment_entry import get_payment_entry
+
+    payment = get_payment_entry("Purchase Invoice", tax.purchase_invoice)
+    payment.paid_from = _account("Domestic Bank", "Bank Accounts", "Asset", "Bank")
+    payment.reference_no = "NEFT-PTAX-2026"
+    payment.reference_date = "2026-09-15"
+    payment.posting_date = "2026-09-15"
+    # Both legs of a payment are balance-sheet accounts, and the fund dimension is
+    # mandatory for those - so a payment out of a fund's money must name the fund.
+    payment.fund = "HOSP"
+    for row in payment.references:
+        row.fund = "HOSP"
+    payment.flags.ignore_permissions = True
+    payment.insert()
+    payment.submit()
+
+    tax.reload()
+    _check(tax.status == "Paid",
+           f"paying the invoice flips the demand to Paid (got {tax.status})")
+    _check(flt(frappe.db.get_value("Purchase Invoice", tax.purchase_invoice,
+                                   "outstanding_amount")) == 0,
+           "invoice is fully settled in AP")
+
+    payment_gl = frappe.get_all("GL Entry",
+                                filters={"voucher_no": payment.name, "is_cancelled": 0},
+                                fields=["account", "fund"])
+    _check(all(row.fund == "HOSP" for row in payment_gl),
+           "payment GL stays on the property's fund")
+
     _expect_refusal(
         "a second tax demand for the same property and year",
         lambda: frappe.get_doc({
