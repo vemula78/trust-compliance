@@ -110,9 +110,22 @@ would overstate the year's income and distort the 85% application test.
 ## Install
 
 ```bash
-bench get-app /path/to/trust_compliance
+bench get-app /path/to/trust_compliance     # add --skip-assets if the bench has no Node
 bench --site <site> install-app trust_compliance
 ```
+
+Two things worth knowing before you run that:
+
+- **`bench get-app` runs `bench build`, which needs Node.** This app ships no bundled
+  assets — no `package.json`, no `*.bundle.js`, no `public/` — so `--skip-assets` is
+  safe and loses nothing. It matters on a container-split deployment (the official
+  `frappe/erpnext` *backend* image has no Node, because assets are prebuilt in the
+  frontend image), where `get-app` otherwise fails at the build step *after* it has
+  already cloned and pip-installed the app.
+- **The app must be a git repository.** `bench get-app` clones it, and bench derives
+  `sites/apps.txt` from the apps directory. An app copied in without its `.git` gets
+  silently dropped from `apps.txt`, which then surfaces as a baffling
+  `NameError: trust_compliance is not defined` from any `bench execute`.
 
 Then, in this order:
 
