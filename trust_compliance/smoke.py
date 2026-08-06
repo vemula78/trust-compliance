@@ -88,7 +88,8 @@ def _reset() -> None:
             doc.cancel()
         doc.delete(ignore_permissions=True, force=True)
 
-    for doctype in ("Property Tax Schedule", "Property Maintenance"):
+    for doctype in ("Investment Transaction", "Trust Investment",
+                    "Property Tax Schedule", "Property Maintenance"):
         for row in frappe.get_all(doctype, filters={"company": COMPANY},
                                   fields=["name", "docstatus"]):
             doc = frappe.get_doc(doctype, row.name)
@@ -449,6 +450,202 @@ def _check_property_register() -> None:
            f"property summary shows 65,000 maintenance (got {summary['maintenance']['total']})")
 
 
+
+def _invest(**kwargs):
+    doc = frappe.get_doc({
+        "doctype": "Trust Investment", "company": COMPANY,
+        "purchase_date": kwargs.pop("purchase_date", "2026-06-01"),
+        "investment_account": f"Investments - Deposits - {ABBR}",
+        **kwargs,
+    })
+    doc.flags.ignore_permissions = True
+    doc.insert()
+    doc.submit()
+    return doc.reload()
+
+
+def _invest_txn(**kwargs):
+    doc = frappe.get_doc({
+        "doctype": "Investment Transaction",
+        "transaction_date": kwargs.pop("transaction_date", "2026-09-30"),
+        **kwargs,
+    })
+    doc.flags.ignore_permissions = True
+    doc.insert()
+    doc.submit()
+    return doc.reload()
+
+
+def _check_investments() -> None:
+    """Section 11(5) investment of corpus.
+
+    The rules here are the ones that cost the Trust money if wrong: an
+    investment outside 11(5) makes its income taxable at 30% under 115BBI, and
+    crediting corpus-FD interest back to corpus would silently drop it out of the
+    85% application test.
+    """
+    print("\n--- investment modes ---")
+    modes = frappe.get_all("Investment Mode",
+                           fields=["name", "statute", "citation_verified"])
+    _check(len(modes) >= 16, f"permitted-mode master seeded ({len(modes)} modes)")
+    _check(all(m.citation_verified for m in modes if m.statute == "Section 11(5)"),
+           "every section 11(5) clause is seeded as citation-verified")
+    _check(not any(m.citation_verified for m in modes if m.statute == "Rule 17C"),
+           "every Rule 17C clause is seeded UNVERIFIED, pending the notified text")
+
+    print("\n--- corpus invested in a permitted mode ---")
+    fd = _invest(investment_name="SBI Corpus FD 2026", fund="CORPUS",
+                 mode="11(5)(iii)", instrument_type="Bank Fixed Deposit",
+                 issuer="State Bank of India", cost=400_000,
+                 interest_rate=7.1, payout_type="Periodic",
+                 maturity_date="2029-06-01", is_corpus=1)
+    _check(fd.status == "Active", f"investment is Active (got {fd.status})")
+    _check(flt(fd.book_value) == 400_000,
+           f"book value is cost on submit (got {fd.book_value})")
+
+    gl = frappe.get_all("GL Entry",
+                        filters={"voucher_no": fd.journal_entry, "is_cancelled": 0},
+                        fields=["account", "debit", "credit", "fund"])
+    _check(len(gl) == 2 and all(row.fund == "CORPUS" for row in gl),
+           "funding entry is fund-tagged to CORPUS on both legs")
+    _check(any(row.account.startswith("Investments - Deposits")
+               and flt(row.debit) == 400_000 for row in gl),
+           "investment asset account debited")
+    _check(any(row.account.startswith("Domestic Bank")
+               and flt(row.credit) == 400_000 for row in gl),
+           "domestic bank credited, not the FCRA bank")
+
+    print("\n--- section 11(5) refusals ---")
+    _expect_refusal(
+        "equity shares in a company that is not a public sector company",
+        lambda: _invest(investment_name="Private Ltd Equity", fund="GEN",
+                        mode="11(5)(vii)", instrument_type="Equity Shares",
+                        issuer="Some Private Ltd", issuer_is_psu=0, cost=10_000),
+    )
+    _expect_refusal(
+        "an investment against a disabled mode",
+        lambda: (frappe.db.set_value("Investment Mode", "17C(v)", "disabled", 1),
+                 _invest(investment_name="Disabled Mode Test", fund="GEN",
+                         mode="17C(v)", instrument_type="Other",
+                         issuer="X", cost=1_000))[1],
+    )
+    frappe.db.set_value("Investment Mode", "17C(v)", "disabled", 0)
+    _expect_refusal(
+        "a corpus-fund investment not marked as corpus",
+        lambda: _invest(investment_name="Unmarked Corpus", fund="CORPUS",
+                        mode="11(5)(iii)", instrument_type="Bank Fixed Deposit",
+                        issuer="SBI", cost=1_000, is_corpus=0),
+    )
+
+    print("\n--- FCRA: speculation is refused, deposits are not ---")
+    _expect_refusal(
+        "foreign contribution invested in equity",
+        lambda: _invest(investment_name="FCRA Equity", fund="FCRA-GEN",
+                        mode="11(5)(vii)", instrument_type="Equity Shares",
+                        issuer="Some PSU Ltd", issuer_is_psu=1, cost=10_000),
+    )
+    fcra_fd = _invest(investment_name="FCRA Bank FD", fund="FCRA-GEN",
+                      mode="11(5)(iii)", instrument_type="Bank Fixed Deposit",
+                      issuer="State Bank of India", cost=50_000,
+                      maturity_date="2027-06-01")
+    fcra_gl = frappe.get_all("GL Entry",
+                             filters={"voucher_no": fcra_fd.journal_entry,
+                                      "is_cancelled": 0},
+                             fields=["account", "credit", "fund"])
+    _check(all(row.fund == "FCRA-GEN" for row in fcra_gl),
+           "FCRA investment stays on the FCRA fund")
+    _check(any(row.account.startswith("FCRA Designated Bank")
+               and flt(row.credit) == 50_000 for row in fcra_gl),
+           "FCRA investment is funded from the FCRA-designated bank account")
+
+    print("\n--- income treatment ---")
+    interest = _invest_txn(investment=fd.name, kind="Interest",
+                           gross_amount=28_400, tds=2_840)
+    _check(flt(interest.net_amount) == 25_560,
+           f"net is gross less TDS (got {interest.net_amount})")
+
+    income_gl = frappe.get_all("GL Entry",
+                               filters={"voucher_no": interest.journal_entry,
+                                        "is_cancelled": 0},
+                               fields=["account", "debit", "credit", "fund"])
+    _check(any(row.account.startswith("Investment Income")
+               and flt(row.credit) == 28_400 for row in income_gl),
+           "gross interest credits an income account")
+    _check(not any(row.account.startswith("Corpus Fund") for row in income_gl),
+           "interest on a corpus FD never touches the corpus equity account")
+    _check(any(row.account.startswith("TDS Receivable")
+               and flt(row.debit) == 2_840 for row in income_gl),
+           "TDS is debited to a receivable, not treated as application")
+    _check(any(row.account.startswith("Domestic Bank")
+               and flt(row.debit) == 25_560 for row in income_gl),
+           "bank receives the net")
+    _check(all(row.fund == "CORPUS" for row in income_gl),
+           "income stays tagged to the fund that owns the investment")
+
+    fcra_interest = _invest_txn(investment=fcra_fd.name, kind="Interest",
+                                gross_amount=3_500, tds=0)
+    fcra_income_gl = frappe.get_all("GL Entry",
+                                    filters={"voucher_no": fcra_interest.journal_entry,
+                                             "is_cancelled": 0},
+                                    fields=["account", "debit", "fund"])
+    _check(any(row.account.startswith("FCRA Designated Bank")
+               and flt(row.debit) == 3_500 for row in fcra_income_gl),
+           "income on foreign contribution returns to the FCRA bank account")
+    _check(all(row.fund == "FCRA-GEN" for row in fcra_income_gl),
+           "income derived from foreign contribution stays foreign contribution")
+
+    _expect_refusal(
+        "TDS greater than the gross interest",
+        lambda: _invest_txn(investment=fd.name, kind="Interest",
+                            gross_amount=1_000, tds=1_500),
+    )
+
+    print("\n--- redemption ---")
+    _invest_txn(investment=fd.name, kind="Redemption", gross_amount=100_000, tds=0,
+                transaction_date="2026-11-30")
+    fd.reload()
+    _check(flt(fd.book_value) == 300_000,
+           f"part redemption reduces book value to 300,000 (got {fd.book_value})")
+    _expect_refusal(
+        "redeeming more than the remaining book value",
+        lambda: _invest_txn(investment=fd.name, kind="Redemption",
+                            gross_amount=999_999, tds=0),
+    )
+
+    print("\n--- investment register ---")
+    from trust_compliance.core.investment import build_investment_register
+
+    register = build_investment_register(
+        queries_investments(), queries_investment_transactions(),
+        frappe.get_all("Fund", filters={"company": COMPANY},
+                       fields=["name", "fund_name", "fund_class", "is_default",
+                               "is_fcra"]),
+    )
+    by_id = {row["investment"]: row for row in register["rows"]}
+    _check(flt(by_id[fd.name]["book_value"]) == 300_000,
+           f"register book value matches the record (got {by_id[fd.name]['book_value']})")
+    _check(flt(by_id[fd.name]["income_earned"]) == 28_400,
+           f"register income is gross (got {by_id[fd.name]['income_earned']})")
+    _check(flt(by_id[fd.name]["tds"]) == 2_840, "register carries TDS separately")
+    _check(by_id[fd.name]["is_compliant"], "the corpus FD reads as 11(5) compliant")
+    _check(flt(register["totals"]["non_compliant_book_value"]) == 0,
+           "nothing is held outside a permitted mode")
+    _check("11(5)(iii)" in register["by_mode"],
+           "register groups book value by permitted mode")
+
+
+def queries_investments():
+    from trust_compliance import queries
+
+    return queries.investments(COMPANY)
+
+
+def queries_investment_transactions():
+    from trust_compliance import queries
+
+    return queries.investment_transactions(COMPANY)
+
+
 def _gl_rows() -> list[dict]:
     """Live GL entries joined to their account's root type and admin flag.
 
@@ -553,6 +750,7 @@ REPORTS = [
     "Income Application",
     "Form 10BD Statement",
     "Property Register",
+    "Investment Register",
 ]
 
 
@@ -572,7 +770,9 @@ def _check_query_reports(context: dict) -> None:
         _check(bool(frappe.db.exists("Report", report_name)),
                f"report {report_name!r} is registered")
         report_filters = (
-            {"company": COMPANY} if report_name == "Property Register" else filters
+            {"company": COMPANY}
+            if report_name in ("Property Register", "Investment Register")
+            else filters
         )
         try:
             result = run_query_report(report_name, filters=report_filters,
@@ -817,6 +1017,7 @@ def run() -> int:
 
     _check_fund_transfers()
     _check_property_register()
+    _check_investments()
     _check_reports()
     _check_query_reports(context)
 
