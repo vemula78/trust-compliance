@@ -49,7 +49,7 @@ modules take plain mappings and return plain data, so the entire rule set is
 unit-tested outside a bench:
 
 ```bash
-python3 -m pytest tests/ -q          # 85 tests, no bench needed
+python3 -m pytest tests/ -q          # 90 tests, no bench needed
 ```
 
 There is also an end-to-end self-check that runs against a real site. It creates a
@@ -63,7 +63,7 @@ own prior run — and returns a non-zero failure count so it can gate a deployme
 bench --site <site> execute trust_compliance.smoke.run
 ```
 
-Verified on ERPNext 16.31.0 / Frappe 16.30.0: 145/145 checks pass.
+Verified on ERPNext 16.31.0 / Frappe 16.30.0: 146/146 checks pass.
 
 The frappe-facing code (`fcra.py`, the doctype controllers) reads records, hands
 mappings to the core, and turns returned strings into `frappe.throw`. This mirrors
@@ -184,14 +184,29 @@ Tracked deliberately, not hidden:
   exists and the helper reads it — but until then an investment in a concern
   controlled by a founder, trustee or substantial contributor will *not* be
   refused. This is the largest remaining gap in the module.
-- **Rule 17C clause numbers are unverified.** The seeded `17C(i)`–`17C(v)` labels
-  are plausible but have not been checked against the currently notified text, so
-  they are seeded with Citation Verified off and the register says so. Section
-  11(5) clauses are seeded verified. Have the auditor confirm the Rule 17C rows
-  and tick the flag before citing a clause on a filing.
+- **No Rule 17C clauses ship.** An earlier version seeded a plausible `17C(i)`–`17C(v)`
+  table; an independent audit established it was materially wrong (the current rule
+  has Public Account of India at (ii), the housing-authority deposit at (iii), and
+  runs to (x)). Shipping nothing is deliberate — a wrong statutory citation on an
+  audit schedule is worse than none. Add the notified Rule 17C clauses to the
+  **Investment Mode** master; they take effect immediately, because the master is
+  the authority, not the code.
 - **`donated_share_disposal_deadline` is implemented and tested but unused.**
   Shares arriving as an in-kind donation must be converted to a permitted mode
   within a year of the FY end; nothing yet enforces or alerts on that deadline.
+- **The clause is self-certified against the instrument.** The app checks that the
+  mode exists, is not withdrawn, and permits equity if the instrument is equity —
+  but not that the instrument genuinely satisfies the clause. An unguaranteed
+  private debenture entered as `11(5)(iii)` (a scheduled-bank deposit) will pass.
+  An allowed-instrument list per mode would close this.
+- **PSU status is a self-certified checkbox** against a free-text issuer, so
+  `issuer_is_psu` ticked on a private company passes.
+- **No unique instrument identity.** `folio_no` is optional and non-unique, so the
+  same physical deposit can be entered twice under two funds. One fund per
+  *record* is enforced; one record per *deposit* is not.
+- **Single currency assumed.** Amounts are written to account-currency fields
+  without an exchange rate, so a non-INR investment account would misstate or fail
+  to balance.
 - **Investment income is tagged to the funding fund**, so a corpus fund's balance
   includes interest not yet applied. That is required for FCRA (income of foreign
   contribution *is* foreign contribution) and keeps traceability, but it means the
