@@ -16,6 +16,8 @@ rather than a parallel ledger.
 | **FCRA segregation** | Foreign and domestic money can never mix inside one voucher. Enforced on the GL entries a voucher actually produced, inside the submitting transaction — see below. |
 | **Trust Donor** | Donor master with PAN validation (including holder-status cross-check against donor type), country for FC-4, and anonymous-donor handling. |
 | **Trust Donation** | Receipting with gap-free `80G/<FY>/<seq>` numbering per financial year, automatic balanced GL posting, corpus-versus-income routing, Section 269ST cash limit, and a PAN requirement above a configurable value because Form 10BD cannot be filed without one. |
+| **Fund Transfer** | Both legs post to one equity clearing account, so the trial balance is untouched and the whole movement is carried by the fund dimension. Corpus is one-way; FCRA and domestic funds cannot be bridged. |
+| **Property register** | Donated properties with survey number, municipality, extent and valuation; property-tax demands billed **through Accounts Payable**; maintenance and AMC records linked to the vendor's bill. |
 
 ## Design
 
@@ -38,7 +40,7 @@ own prior run — and returns a non-zero failure count so it can gate a deployme
 bench --site <site> execute trust_compliance.smoke.run
 ```
 
-Verified on ERPNext 16.31.0 / Frappe 16.30.0: 61/61 checks pass.
+Verified on ERPNext 16.31.0 / Frappe 16.30.0: 109/109 checks pass.
 
 The frappe-facing code (`fcra.py`, the doctype controllers) reads records, hands
 mappings to the core, and turns returned strings into `frappe.throw`. This mirrors
@@ -122,6 +124,8 @@ no two can disagree with the ledger, and all computed by the tested pure functio
 | **Income Application** | 85% application tracking. Labelled a working paper, with every simplification stated on the report itself. |
 | **Form 10BD Statement** | One row per donor per donation type per mode, matching the filing utility. Flags rows with no PAN rather than dropping the donor. |
 
+| **Property Register** | One row per property with its fund, recorded value, tax outstanding, next due date and maintenance spend. Outstanding is read from the invoice, not from the schedule's status field. |
+
 Plus the **80G Donation Receipt** print format, and a **Form 10BE certificate**
 rendered per donor per financial year from the same computation that produces the
 10BD statement — so the certificate a donor holds and the return filed with the
@@ -136,14 +140,20 @@ Tracked deliberately, not hidden:
   *property* — the dominant in-kind case — is the Property register's job.
 - **Property register, property tax, maintenance, program accounting** (Phase 11
   of the source ERP) are not ported yet.
-- **Fund transfers** are not ported yet — the equity clearing account is
-  configurable and the fund reports already read an equity debit as an outflow, so
-  the reporting side is in place, but there is no Fund Transfer document.
-- **Approval workflow** for fund transfers is not built. ERPNext's Workflow engine
-  should cover this natively once the document exists.
 - **CSV export shape** for Form 10BD is the report's own export, not the utility's
   exact template. The columns are named to match; the mapping has not been tested
   against a live filing.
+- **Program / inter-unit accounting** (Trust → hospital, Trust → school transfers
+  with elimination on consolidation, and program budget-vs-utilisation) is the
+  remaining piece of Phase 11 and is not built.
+- **Property tax reminders** are not automated. The Property Register shows what is
+  overdue and what is due next, but nothing emails anyone; a Notification on
+  Property Tax Schedule would cover it.
+- **Payments must name the fund.** Because the dimension is mandatory for
+  balance-sheet accounts, a Payment Entry settling a fund's bill has to carry the
+  fund on the parent and on its references. That is correct for fund accounting —
+  money leaves a specific fund's bank — but it is extra keying, and a default
+  dimension per company only pre-fills the general fund.
 
 ## Provenance
 

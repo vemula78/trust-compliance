@@ -147,8 +147,8 @@ def _message(rows: list[dict], company: str) -> str:
 def _columns() -> list[dict]:
     currency_options = "Company:company:default_currency"
     return [
-        # Deliberately not called "name": frappe's DataTable reserves that key on
-        # a row object, and a column using it renders an empty grid.
+        # Aliased from p.name for readability: this report joins three doctypes,
+        # and a bare "name" column is ambiguous next to property_name.
         {"fieldname": "property_id", "label": _("ID"), "fieldtype": "Link",
          "options": "Trust Property", "width": 110},
         {"fieldname": "property_name", "label": _("Property"), "fieldtype": "Data",
