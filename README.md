@@ -49,7 +49,7 @@ modules take plain mappings and return plain data, so the entire rule set is
 unit-tested outside a bench:
 
 ```bash
-python3 -m pytest tests/ -q          # 50 tests, no bench needed
+python3 -m pytest tests/ -q          # 85 tests, no bench needed
 ```
 
 There is also an end-to-end self-check that runs against a real site. It creates a
@@ -63,7 +63,7 @@ own prior run — and returns a non-zero failure count so it can gate a deployme
 bench --site <site> execute trust_compliance.smoke.run
 ```
 
-Verified on ERPNext 16.31.0 / Frappe 16.30.0: 109/109 checks pass.
+Verified on ERPNext 16.31.0 / Frappe 16.30.0: 145/145 checks pass.
 
 The frappe-facing code (`fcra.py`, the doctype controllers) reads records, hands
 mappings to the core, and turns returned strings into `frappe.throw`. This mirrors
@@ -135,7 +135,7 @@ Then, in this order:
 
 ## Reports
 
-Seven script reports, all driven from one GL query (`trust_compliance/queries.py`) so
+Eight script reports, all driven from one GL query (`trust_compliance/queries.py`) so
 no two can disagree with the ledger, and all computed by the tested pure functions:
 
 | Report | Notes |
@@ -178,6 +178,30 @@ Tracked deliberately, not hidden:
   *property* — the dominant in-kind case — is the Property register's job.
 - **Property register, property tax, maintenance, program accounting** (Phase 11
   of the source ERP) are not ported yet.
+- **The section 13(2)(h)/13(3) prohibited-person check is wired but inert.**
+  `get_prohibited_parties()` returns an empty list, because Trust Donor has no
+  `is_prohibited_person` flag yet. The rule is enforced the moment that field
+  exists and the helper reads it — but until then an investment in a concern
+  controlled by a founder, trustee or substantial contributor will *not* be
+  refused. This is the largest remaining gap in the module.
+- **Rule 17C clause numbers are unverified.** The seeded `17C(i)`–`17C(v)` labels
+  are plausible but have not been checked against the currently notified text, so
+  they are seeded with Citation Verified off and the register says so. Section
+  11(5) clauses are seeded verified. Have the auditor confirm the Rule 17C rows
+  and tick the flag before citing a clause on a filing.
+- **`donated_share_disposal_deadline` is implemented and tested but unused.**
+  Shares arriving as an in-kind donation must be converted to a permitted mode
+  within a year of the FY end; nothing yet enforces or alerts on that deadline.
+- **Investment income is tagged to the funding fund**, so a corpus fund's balance
+  includes interest not yet applied. That is required for FCRA (income of foreign
+  contribution *is* foreign contribution) and keeps traceability, but it means the
+  corpus fund reads higher than its spendable-corpus figure. Moving that income to
+  a spendable fund is a deliberate Fund Transfer, not automatic. Confirm the policy
+  with the Trust's auditor.
+- **No accrual, rollover or revaluation events.** Only Interest, Dividend,
+  Redemption and Maturity are modelled. Accrued-but-unreceived interest on a
+  mercantile basis, and auto-rollover of a cumulative deposit (which needs a fresh
+  11(5) check), are not handled.
 - **CSV export shape** for Form 10BD is the report's own export, not the utility's
   exact template. The columns are named to match; the mapping has not been tested
   against a live filing.
