@@ -63,7 +63,10 @@ own prior run — and returns a non-zero failure count so it can gate a deployme
 bench --site <site> execute trust_compliance.smoke.run
 ```
 
-Verified on ERPNext 16.31.0 / Frappe 16.30.0: 146/146 checks pass.
+Verified on ERPNext 16.31.0 / Frappe 16.30.0: **146/146 checks pass on a clean
+install** - a site created with `bench new-site --install-app erpnext`, the app added
+with `bench get-app`, and nothing else pre-provisioned. Re-running it on the same
+site passes identically, so it is genuinely idempotent rather than order-dependent.
 
 The frappe-facing code (`fcra.py`, the doctype controllers) reads records, hands
 mappings to the core, and turns returned strings into `frappe.throw`. This mirrors
@@ -137,14 +140,19 @@ Then, in this order:
 4. Fill in **Trust Compliance Settings → Company Accounts**.
 5. Optionally make the dimension mandatory:
    `trust_compliance.setup.accounting_dimension.set_fund_mandatory(company, default_fund)`.
-6. **Set the number format to `#,##,###.##`.** Not cosmetic: the amount in words is
-   the operative figure on an 80G receipt, and Frappe only uses Indian lakh/crore
-   wording when this format is effective. Otherwise a receipt reads *"Rupees Five
-   Hundred And Sixty Thousand only"* instead of *"Rupees Five Lakh, Sixty Thousand
-   only"*. On **Frappe 16 this is locale-resolved** — the active `Language`
-   record's Number Format overrides the System Settings default — so set System
-   Settings *and* make sure the Language record does not contradict it. Trust
-   Compliance Settings warns when the effective format is not Indian.
+6. **Number format — handled for you, with one caveat.** Installing the app sets the
+   number format to `#,##,###.##` if the site is still on Frappe's untouched default,
+   because Indian lakh/crore grouping *and* Indian amount-in-words both derive from
+   it, and on an 80G receipt the amount in words is the operative figure. A clean-install
+   rehearsal showed that leaving this to a manual step produced a working system that
+   quietly issued receipts reading *"Rupees Five Hundred And Sixty Thousand only"*
+   instead of *"Rupees Five Lakh, Sixty Thousand only"*.
+
+   If the format had already been changed from the default, the app leaves it alone —
+   a site-global setting is the administrator's. The caveat: on **Frappe 16 the format
+   is locale-resolved**, so the active `Language` record's Number Format overrides the
+   System Settings value. Trust Compliance Settings warns whenever the *effective*
+   format is not Indian, which catches that case.
 
 ## Reports
 
