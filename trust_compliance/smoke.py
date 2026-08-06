@@ -127,6 +127,18 @@ def _reset() -> None:
 
 
 def _setup() -> dict:
+    # Setup-wizard fixtures, provisioned FIRST: creating a Company builds its
+    # default warehouses, which need Warehouse Type "Transit" to already exist.
+    # A site created with `bench new-site --install-app erpnext` does not have it -
+    # only the setup wizard creates it - so company creation fails outright on any
+    # site whose wizard was never run.
+    for doctype, name in (("Warehouse Type", "Transit"), ("UOM", "Nos")):
+        if not frappe.db.exists(doctype, name):
+            doc = frappe.get_doc({"doctype": doctype, "__newname": name,
+                                  **({"uom_name": name} if doctype == "UOM" else {})})
+            doc.flags.ignore_permissions = True
+            doc.insert()
+
     if not frappe.db.exists("Company", COMPANY):
         company = frappe.get_doc({
             "doctype": "Company", "company_name": COMPANY, "abbr": ABBR,
@@ -152,15 +164,6 @@ def _setup() -> dict:
         })
         year.flags.ignore_permissions = True
         year.insert()
-
-    # More setup-wizard fixtures a pwd/scratch site lacks: a Warehouse Type for
-    # company creation, and a UOM for the property-tax invoice line.
-    for doctype, name in (("Warehouse Type", "Transit"), ("UOM", "Nos")):
-        if not frappe.db.exists(doctype, name):
-            doc = frappe.get_doc({"doctype": doctype, "__newname": name,
-                                  **({"uom_name": name} if doctype == "UOM" else {})})
-            doc.flags.ignore_permissions = True
-            doc.insert()
 
     accounts = {
         "bank_account": _account("Domestic Bank", "Bank Accounts", "Asset", "Bank"),
