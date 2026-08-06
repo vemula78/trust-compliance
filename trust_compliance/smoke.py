@@ -530,12 +530,20 @@ def _check_investments() -> None:
                          issuer="X", cost=1_000))[1],
     )
     frappe.db.set_value("Investment Mode", "17C(v)", "disabled", 0)
-    _expect_refusal(
-        "a corpus-fund investment not marked as corpus",
-        lambda: _invest(investment_name="Unmarked Corpus", fund="CORPUS",
+    # Corpus-ness is derived, not entered: an investment bought from a Corpus
+    # fund is a corpus holding whatever the form says, and one bought from a
+    # spendable fund is not. Passing the wrong flag is corrected, not refused -
+    # there is no case where the two can legitimately disagree.
+    mislabelled = _invest(investment_name="Unmarked Corpus", fund="CORPUS",
+                          mode="11(5)(iii)", instrument_type="Bank Fixed Deposit",
+                          issuer="SBI", cost=1_000, is_corpus=0)
+    _check(mislabelled.is_corpus == 1,
+           "a Corpus-fund investment is derived as corpus even if entered otherwise")
+    spendable = _invest(investment_name="General Fund FD", fund="GEN",
                         mode="11(5)(iii)", instrument_type="Bank Fixed Deposit",
-                        issuer="SBI", cost=1_000, is_corpus=0),
-    )
+                        issuer="SBI", cost=2_000, is_corpus=1)
+    _check(spendable.is_corpus == 0,
+           "a spendable-fund investment is derived as non-corpus")
 
     print("\n--- FCRA: speculation is refused, deposits are not ---")
     _expect_refusal(
