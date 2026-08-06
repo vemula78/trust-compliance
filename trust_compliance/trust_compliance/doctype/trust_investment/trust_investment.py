@@ -51,8 +51,7 @@ class TrustInvestment(Document):
     def validate(self):
         self._validate_cost()
         self._validate_fund_belongs_to_company()
-        self._default_is_corpus_from_fund()
-        self._validate_corpus_identification()
+        self._derive_is_corpus()
         self._validate_dates()
         self._validate_investment_account()
         self._validate_permitted_mode()
@@ -94,43 +93,21 @@ class TrustInvestment(Document):
         self.fund_class = fund.fund_class
         self.is_fcra = 1 if fund.is_fcra else 0
 
-    def _default_is_corpus_from_fund(self):
-        """Fetch-if-empty: money out of a Corpus fund is a corpus investment.
+    def _derive_is_corpus(self):
+        """Corpus-ness is derived from the funding fund, never entered.
 
-        Applied only while the record is new. Once it has been saved the flag is
-        the user's, so an amendment does not silently have it rewritten - it is
-        checked instead, by `_validate_corpus_identification`.
+        An instrument bought with corpus money is a corpus holding and one bought
+        with spendable money is not - there is no third case and no case where the
+        two disagree. So this is computed rather than validated: an earlier version
+        auto-filled the flag and then refused a mismatch, which made the refusal
+        unreachable, because the auto-fill had already corrected the value the check
+        was looking for. Deriving removes the state and the dead branch together.
+
+        It matters because corpus keeps its section 11(1)(d) exemption only while it
+        stays separately identifiable, so the corpus schedule must neither omit a
+        holding nor claim one the Trust does not have.
         """
-        if self.is_new() and not self.is_corpus and self._fund().fund_class == "Corpus":
-            self.is_corpus = 1
-
-    def _validate_corpus_identification(self):
-        """Corpus and non-corpus investments cannot be confused with each other.
-
-        Corpus is capital held on the donor's direction. Its 11(1)(d) exemption
-        survives only while it is separately identifiable, so an instrument bought
-        with corpus money must say so, and an instrument bought with spendable
-        money must not - otherwise the corpus schedule either omits a holding or
-        claims one it does not have.
-        """
-        fund = self._fund()
-        if fund.fund_class == "Corpus" and not self.is_corpus:
-            frappe.throw(
-                _(
-                    "Fund {0} is Corpus class, so an investment bought from it must be "
-                    "marked as a corpus investment. Corpus keeps its section 11(1)(d) "
-                    "exemption only while it is separately identifiable."
-                ).format(fund.name),
-                title=_("Corpus"),
-            )
-        if self.is_corpus and fund.fund_class != "Corpus":
-            frappe.throw(
-                _(
-                    "A corpus investment must be funded from a Corpus-class fund; {0} "
-                    "is {1}."
-                ).format(fund.name, _(fund.fund_class)),
-                title=_("Corpus"),
-            )
+        self.is_corpus = 1 if self._fund().fund_class == "Corpus" else 0
 
     def _validate_dates(self):
         if self.maturity_date and self.purchase_date:

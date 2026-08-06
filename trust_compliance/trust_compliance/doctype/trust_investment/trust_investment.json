@@ -134,7 +134,8 @@
    "fieldname": "is_corpus",
    "fieldtype": "Check",
    "label": "Corpus Investment",
-   "description": "Corpus keeps its section 11(1)(d) exemption only while it is held in an 11(5) mode and remains separately identifiable. Set automatically from a Corpus-class fund."
+   "description": "Derived from the funding fund: money out of a Corpus-class fund is a corpus holding. Corpus keeps its section 11(1)(d) exemption only while it stays separately identifiable.",
+   "read_only": 1
   },
   {
    "fieldname": "section_mode",

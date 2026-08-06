@@ -689,9 +689,14 @@ def _check_reports() -> None:
            f"GEN inflow is 60,000 this year (got {by_fund['GEN']['inflow']})")
     _check(by_fund["GEN"]["opening"] == 1_000,
            f"GEN opening carries the 2025-26 donation (got {by_fund['GEN']['opening']})")
-    # 5,00,000 corpus donation plus a 5,000 transfer in.
-    _check(by_fund["CORPUS"]["balance"] == 505_000,
-           f"CORPUS balance is 505,000 (got {by_fund['CORPUS']['balance']})")
+    # 5,00,000 corpus donation, a 5,000 transfer in, and 28,400 of interest on
+    # the corpus FD. The interest is income of the year - it is counted in the
+    # 85% application test through the income account - but it is tagged to the
+    # fund that owns the investment, so the corpus fund's net assets include
+    # income not yet applied. Moving it to a spendable fund is a Fund Transfer,
+    # deliberately an explicit act rather than an automatic one.
+    _check(by_fund["CORPUS"]["balance"] == 533_400,
+           f"CORPUS balance is 533,400 incl. FD interest (got {by_fund['CORPUS']['balance']})")
     # 2,000 manual journal plus a 25,000 transfer in.
     _check(by_fund["HOSP"]["inflow"] == 27_000,
            f"HOSP inflow is 27,000 incl. transfer (got {by_fund['HOSP']['inflow']})")
@@ -712,8 +717,10 @@ def _check_reports() -> None:
     )
 
     # FCRA fund: 100,000 received, 3,000 spent on an administrative account.
-    _check(by_fund["FCRA-GEN"]["inflow"] == 100_000,
-           f"FCRA-GEN inflow is 100,000 (got {by_fund['FCRA-GEN']['inflow']})")
+    # 1,00,000 donation plus 3,500 interest on the FCRA FD: income derived from
+    # foreign contribution is itself foreign contribution.
+    _check(by_fund["FCRA-GEN"]["inflow"] == 103_500,
+           f"FCRA-GEN inflow is 103,500 incl. FD interest (got {by_fund['FCRA-GEN']['inflow']})")
     _check(by_fund["FCRA-GEN"]["outflow"] == 3_000,
            f"FCRA-GEN outflow is 3,000 (got {by_fund['FCRA-GEN']['outflow']})")
 
@@ -727,19 +734,28 @@ def _check_reports() -> None:
     fcra = build_fcra_register(gl_rows, donations, funds,
                                from_date="2026-04-01", to_date="2027-03-31")
     summary = fcra["summary"]
-    _check(summary["receipts"] == 100_000,
-           f"FC-4 receipts are 100,000 (got {summary['receipts']})")
+    # FC-4 must include interest earned on foreign contribution, not only donations.
+    _check(summary["receipts"] == 103_500,
+           f"FC-4 receipts are 103,500 incl. FD interest (got {summary['receipts']})")
     _check(summary["admin_utilized"] == 3_000,
            f"administrative utilisation is 3,000 (got {summary['admin_utilized']})")
-    _check(summary["admin_percent"] == 3.0,
-           f"admin ratio is 3% of contribution received (got {summary['admin_percent']}%)")
+    # 3,000 of 1,03,500 received.
+    _check(summary["admin_percent"] == 2.9,
+           f"admin ratio is 2.9% of contribution received (got {summary['admin_percent']}%)")
     _check(summary["admin_cap_exceeded"] is False, "20% FCRA admin cap not breached")
-    _check(summary["closing_balance"] == 97_000,
-           f"FCRA closing balance is 97,000 (got {summary['closing_balance']})")
+    _check(summary["closing_balance"] == 100_500,
+           f"FCRA closing balance is 100,500 (got {summary['closing_balance']})")
     _check(len(fcra["receipts"]) == 1 and fcra["receipts"][0]["amount"] == 100_000,
            "FC-4 contributor detail lists exactly the one foreign donation")
-    _check(summary["donation_receipts"] == summary["journal_receipts"],
-           "register detail total reconciles to the GL-derived receipts figure")
+    # The two figures now differ by exactly the FCRA FD interest: it is foreign
+    # contribution received in the year and belongs in FC-4, but it has no
+    # contributor row because it is not a donation. That gap is what the FCRA
+    # report warns about, so asserting the difference is *explained* is the real
+    # reconciliation - asserting equality would only hold while the Trust earns
+    # nothing on its foreign contribution.
+    _check(summary["journal_receipts"] - summary["donation_receipts"] == 3_500,
+           f"FC-4 exceeds receipted donations by exactly the FD interest "
+           f"({summary['journal_receipts']} - {summary['donation_receipts']})")
 
 
 REPORTS = [

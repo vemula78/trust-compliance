@@ -74,7 +74,9 @@ def execute(filters: dict | None = None):
             }
         )
 
-    return _columns(), data, _message(report, rows, company), None, _chart(report)
+    # (columns, data, message, chart) - the chart must not land in the
+    # report_summary slot, which the desk iterates as a list.
+    return _columns(), data, _message(report, rows, company), _chart(report)
 
 
 def _message(report: dict, rows: list[dict], company: str) -> str:
