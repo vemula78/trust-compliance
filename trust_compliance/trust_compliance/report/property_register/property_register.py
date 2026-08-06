@@ -29,7 +29,7 @@ def execute(filters: dict | None = None):
 
     rows = frappe.db.sql(
         f"""
-        SELECT p.name, p.property_name, p.property_type, p.status, p.fund,
+        SELECT p.name AS property_id, p.property_name, p.property_type, p.status, p.fund,
                p.survey_number, p.municipality, p.extent, p.extent_uom,
                p.valuation, p.guideline_value, p.donor, p.donation_date,
                COALESCE(tax.total, 0)        AS tax_paid_or_billed,
@@ -147,7 +147,9 @@ def _message(rows: list[dict], company: str) -> str:
 def _columns() -> list[dict]:
     currency_options = "Company:company:default_currency"
     return [
-        {"fieldname": "name", "label": _("ID"), "fieldtype": "Link",
+        # Deliberately not called "name": frappe's DataTable reserves that key on
+        # a row object, and a column using it renders an empty grid.
+        {"fieldname": "property_id", "label": _("ID"), "fieldtype": "Link",
          "options": "Trust Property", "width": 110},
         {"fieldname": "property_name", "label": _("Property"), "fieldtype": "Data",
          "width": 200},
