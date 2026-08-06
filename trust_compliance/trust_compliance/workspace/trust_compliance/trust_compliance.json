@@ -1,6 +1,6 @@
 {
  "charts": [],
- "content": "[{\"id\": \"hdrTrust\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\"><b>Trust Compliance</b></span>\", \"col\": 12}}, {\"id\": \"pgrTrust\", \"type\": \"paragraph\", \"data\": {\"text\": \"Fund accounting, 80G receipting and FCRA segregation for a 12A/12AB charitable trust.\", \"col\": 12}}, {\"id\": \"cardMasters\", \"type\": \"card\", \"data\": {\"card_name\": \"Masters\", \"col\": 4}}, {\"id\": \"cardTxn\", \"type\": \"card\", \"data\": {\"card_name\": \"Transactions\", \"col\": 4}}, {\"id\": \"cardFund\", \"type\": \"card\", \"data\": {\"card_name\": \"Fund Reporting\", \"col\": 4}}, {\"id\": \"cardProperty\", \"type\": \"card\", \"data\": {\"card_name\": \"Property\", \"col\": 4}}, {\"id\": \"spacer1\", \"type\": \"spacer\", \"data\": {\"col\": 12}}, {\"id\": \"cardInvest\", \"type\": \"card\", \"data\": {\"card_name\": \"Investments\", \"col\": 4}}, {\"id\": \"cardStat\", \"type\": \"card\", \"data\": {\"card_name\": \"Statutory Compliance\", \"col\": 4}}]",
+ "content": "[{\"id\": \"hdrTrust\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\"><b>Trust Compliance</b></span>\", \"col\": 12}}, {\"id\": \"pgrTrust\", \"type\": \"paragraph\", \"data\": {\"text\": \"Fund accounting, 80G receipting and FCRA segregation for a 12A/12AB charitable trust.\", \"col\": 12}}, {\"id\": \"cardMasters\", \"type\": \"card\", \"data\": {\"card_name\": \"Masters\", \"col\": 4}}, {\"id\": \"cardTxn\", \"type\": \"card\", \"data\": {\"card_name\": \"Transactions\", \"col\": 4}}, {\"id\": \"cardFund\", \"type\": \"card\", \"data\": {\"card_name\": \"Fund Reporting\", \"col\": 4}}, {\"id\": \"cardProperty\", \"type\": \"card\", \"data\": {\"card_name\": \"Property\", \"col\": 4}}, {\"id\": \"spacer1\", \"type\": \"spacer\", \"data\": {\"col\": 12}}, {\"id\": \"cardInvest\", \"type\": \"card\", \"data\": {\"card_name\": \"Investments\", \"col\": 4}}, {\"id\": \"cardPrograms\", \"type\": \"card\", \"data\": {\"card_name\": \"Programs and Units\", \"col\": 4}}, {\"id\": \"cardStat\", \"type\": \"card\", \"data\": {\"card_name\": \"Statutory Compliance\", \"col\": 4}}]",
  "creation": "2026-08-05 00:00:00.000000",
  "custom_blocks": [],
  "docstatus": 0,
@@ -232,6 +232,58 @@
    "onboard": 0,
    "type": "Link",
    "doctype_for_report": "Trust Investment"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Programs and Units",
+   "link_count": 0,
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Inter Unit Transfer",
+   "link_count": 0,
+   "link_to": "Inter Unit Transfer",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Project",
+   "link_count": 0,
+   "link_to": "Project",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Program Utilisation",
+   "link_count": 0,
+   "link_to": "Program Utilisation",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Inter Unit Eliminations",
+   "link_count": 0,
+   "link_to": "Inter Unit Eliminations",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
   },
   {
    "hidden": 0,

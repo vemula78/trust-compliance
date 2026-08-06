@@ -1,0 +1,227 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "naming_series:",
+ "creation": "2026-08-06 00:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "is_submittable": 1,
+ "field_order": [
+  "naming_series",
+  "transfer_date",
+  "program",
+  "column_break_head",
+  "amount",
+  "amount_in_words",
+  "section_units",
+  "from_company",
+  "from_fund",
+  "from_fund_class",
+  "column_break_units",
+  "to_company",
+  "to_fund",
+  "to_fund_class",
+  "section_purpose",
+  "purpose",
+  "section_gl",
+  "from_journal_entry",
+  "column_break_gl",
+  "to_journal_entry",
+  "amended_from"
+ ],
+ "fields": [
+  {
+   "default": "IUT-.YYYY.-",
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Series",
+   "options": "IUT-.YYYY.-",
+   "reqd": 1
+  },
+  {
+   "fieldname": "transfer_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Transfer Date",
+   "reqd": 1
+  },
+  {
+   "fieldname": "program",
+   "fieldtype": "Link",
+   "label": "Program",
+   "options": "Project",
+   "description": "The program the grant funds. Must be a project of the receiving unit, and is tagged onto the receiving leg only - utilisation is measured where the money is spent, so the receiving unit's Program Utilisation report shows what it was given against what it spent."
+  },
+  {
+   "fieldname": "column_break_head",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "amount",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Amount",
+   "options": "Company:from_company:default_currency",
+   "reqd": 1
+  },
+  {
+   "fieldname": "amount_in_words",
+   "fieldtype": "Small Text",
+   "label": "Amount in Words",
+   "read_only": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "section_units",
+   "fieldtype": "Section Break",
+   "label": "Units"
+  },
+  {
+   "fieldname": "from_company",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "From Unit",
+   "options": "Company",
+   "reqd": 1,
+   "description": "The paying unit. The transfer is expenditure of this unit and application of its income."
+  },
+  {
+   "fieldname": "from_fund",
+   "fieldtype": "Link",
+   "label": "From Fund",
+   "options": "Fund",
+   "reqd": 1,
+   "description": "Corpus cannot be paid out, and foreign contribution cannot be transferred to another person at all - FCRA section 7."
+  },
+  {
+   "fetch_from": "from_fund.fund_class",
+   "fieldname": "from_fund_class",
+   "fieldtype": "Data",
+   "label": "From Fund Class",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_units",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "to_company",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "To Unit",
+   "options": "Company",
+   "reqd": 1,
+   "description": "The receiving unit. The transfer is income of this unit, and is eliminated against the paying unit's expense on consolidation."
+  },
+  {
+   "fieldname": "to_fund",
+   "fieldtype": "Link",
+   "label": "To Fund",
+   "options": "Fund",
+   "reqd": 1,
+   "description": "A fund of the receiving unit. A grant from another unit is income, so it cannot be received into a Corpus fund."
+  },
+  {
+   "fetch_from": "to_fund.fund_class",
+   "fieldname": "to_fund_class",
+   "fieldtype": "Data",
+   "label": "To Fund Class",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_purpose",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "purpose",
+   "fieldtype": "Small Text",
+   "label": "Purpose",
+   "reqd": 1,
+   "description": "What the receiving unit is to apply the money to. Required: this is the Trust's authority for the grant and what the receiving unit's utilisation is measured against."
+  },
+  {
+   "fieldname": "section_gl",
+   "fieldtype": "Section Break",
+   "label": "Accounting"
+  },
+  {
+   "fieldname": "from_journal_entry",
+   "fieldtype": "Link",
+   "label": "Paying Unit Journal Entry",
+   "options": "Journal Entry",
+   "read_only": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "column_break_gl",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "to_journal_entry",
+   "fieldtype": "Link",
+   "label": "Receiving Unit Journal Entry",
+   "options": "Journal Entry",
+   "read_only": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Inter Unit Transfer",
+   "print_hide": 1,
+   "read_only": 1
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-08-06 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Trust Compliance",
+ "name": "Inter Unit Transfer",
+ "naming_rule": "By \"Naming Series\" field",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "amend": 1,
+   "cancel": 1,
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Accounts Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Accounts User",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "read": 1,
+   "report": 1,
+   "export": 1,
+   "role": "Auditor"
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "transfer_date",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

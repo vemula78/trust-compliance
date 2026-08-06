@@ -19,6 +19,25 @@ rather than a parallel ledger.
 | **Fund Transfer** | Both legs post to one equity clearing account, so the trial balance is untouched and the whole movement is carried by the fund dimension. Corpus is one-way; FCRA and domestic funds cannot be bridged. |
 | **Property register** | Donated properties with survey number, municipality, extent and valuation; property-tax demands billed **through Accounts Payable**; maintenance and AMC records linked to the vendor's bill. |
 | **Investments** | Corpus and other funds invested only in the forms and modes permitted by **section 11(5)** (extended by Rule 17C), held as a maintainable master rather than hardcoded. Compliance is re-checked on the register, not just at purchase. Interest and dividend are booked as **income of the year, never corpus**. |
+| **Inter-unit transfers** | A grant from the Trust to one of its hospitals or schools posts in **both units' books in one step** — expense and bank in the paying unit, bank and grant income in the receiving one — and both legs are flagged in the ledger so a consolidated statement can eliminate them. Corpus cannot be paid out and foreign contribution cannot be transferred at all (FCRA s.7). |
+| **Program accounting** | Programs are ERPNext **Projects**, so the dimension is already on every GL Entry. Utilisation is read off the ledger, fund by fund, against the ERPNext **Budget** set on the program. |
+
+### Why an inter-unit transfer is two entries and one elimination
+
+Each unit of the Trust keeps its own books and files its own return, so a grant to a
+hospital is real expenditure in the Trust's accounts — application of its income
+under section 11(1)(a) — and real income in the hospital's. Both entries have to
+stand.
+
+At *group* level they are the same money seen twice. A consolidation that added them
+would inflate group income and group expenditure by the amount transferred and show
+the group applying income it had only moved between its own pockets. ERPNext's
+Consolidated Financial Statement does not eliminate this, so both legs carry
+`is_inter_unit` and the counterparty unit in the ledger itself, and the **Inter-Unit
+Eliminations** report is the disclosure that goes with the consolidation: how much to
+remove from each side, per pair of units, with the two sides reconciled against each
+other. If they differ, one leg was cancelled or edited alone — a real defect that a
+single total would hide.
 
 ### Why the investment module refuses rather than warns
 
@@ -170,7 +189,7 @@ Then, in this order:
 
 ## Reports
 
-Eight script reports, all driven from one GL query (`trust_compliance/queries.py`) so
+Ten script reports, all driven from one GL query (`trust_compliance/queries.py`) so
 no two can disagree with the ledger, and all computed by the tested pure functions:
 
 | Report | Notes |
@@ -181,8 +200,10 @@ no two can disagree with the ledger, and all computed by the tested pure functio
 | **FCRA Register** | Contributor-wise receipts, utilisation with administrative classification, and the 20% cap measured against contribution *received*. Warns when ledger receipts exceed receipted donations, i.e. foreign contribution posted by journal entry with no contributor row to file. |
 | **Income Application** | 85% application tracking. Labelled a working paper, with every simplification stated on the report itself. |
 | **Form 10BD Statement** | One row per donor per donation type per mode, matching the filing utility. Flags rows with no PAN rather than dropping the donor. |
-
 | **Property Register** | One row per property with its fund, recorded value, tax outstanding, next due date and maintenance spend. Outstanding is read from the invoice, not from the schedule's status field. |
+| **Investment Register** | Holdings at cost with the 11(5) clause re-checked per row, income and TDS shown separately, and any violation named. |
+| **Program Utilisation** | Grant received, spent, budget and utilisation per program, with the funds that paid for it. Spending tagged to no program is disclosed rather than pooled into an "unassigned" row, because that difference is exactly what reconciles this report to the Income and Expenditure statement. |
+| **Inter Unit Eliminations** | What a consolidated statement must remove, per pair of units, with the paying unit's expense reconciled against the receiving unit's grant income. |
 
 Plus the **80G Donation Receipt** print format, and a **Form 10BE certificate**
 rendered per donor per financial year from the same computation that produces the
@@ -204,6 +225,16 @@ That recreates the workspace from the app's definition. Anything an administrato
 customised on it by hand is lost, which is why it is a deliberate step rather than
 something the app does on migrate.
 
+Custom fields this app adds to ERPNext doctypes *are* created on migrate, by a patch
+in `trust_compliance/patches.txt` — `after_install` alone would leave an existing
+site without them, and a missing `is_inter_unit` column makes the eliminations report
+error rather than show an empty schedule.
+
+The **Transfers to Institutions** and **Grants Received** accounts must be set in
+Trust Compliance Settings for each unit that pays or receives an inter-unit transfer.
+Both are checked at posting time: the paying side must be an Expense account and the
+receiving side Income, because the elimination pairs one against the other.
+
 ## Known gaps
 
 Tracked deliberately, not hidden:
@@ -211,8 +242,16 @@ Tracked deliberately, not hidden:
 - **In-kind donations** post the GL effect correctly but do not yet create the
   ERPNext Asset register record, which needs a fixed-asset Item. Donated
   *property* — the dominant in-kind case — is the Property register's job.
-- **Property register, property tax, maintenance, program accounting** (Phase 11
-  of the source ERP) are not ported yet.
+- **The elimination is a disclosure, not an adjustment.** ERPNext's Consolidated
+  Financial Statement still shows both legs; the Inter-Unit Eliminations report says
+  what to take out of it and the adjustment is made by whoever prepares the
+  consolidated accounts. Overriding ERPNext's own consolidation report to apply it
+  automatically would mean maintaining a fork of that report through every ERPNext
+  release, against a group of three or four units where the figure is one line.
+- **A program budget is not enforced, only reported.** ERPNext's Budget can stop a
+  posting that exceeds it, but only for the accounts and document types configured
+  on the Budget record itself; nothing here adds an enforcement of its own, and a
+  program can be overspent. The report names it in red.
 - **The section 13(3) check depends on the flag being set, and matches the issuer
   by name.** The rule is live, but it can only refuse a person the trustees have
   marked on their Trust Donor record; nothing derives interested-person status, and
@@ -271,9 +310,18 @@ Tracked deliberately, not hidden:
 
 ## Provenance
 
-Ported from the Trust layer (Phases 9–10) of a Next.js + Prisma accounting ERP,
+Ported from the Trust layer (Phases 9–11) of a Next.js + Prisma accounting ERP,
 preserving the bases of measurement exactly — the FCRA 20% cap measured against
 contribution *received* rather than utilised, fund balances on a net-asset basis
 that reads an equity debit as an outflow, and receipt numbering that skips rather
 than ever re-issuing a number. The `tests/` suite asserts those behaviours so the
 two implementations cannot drift silently.
+
+Two things were changed rather than copied, both because the source could not do
+better. Its elimination reported a single total — the debit value removed, which for
+one transfer of X reads 2X; here the two sides are reported separately and reconciled,
+so one leg cancelled alone is visible instead of hidden inside a doubled figure. And
+its program report had no budget column at all: its budget line was keyed on
+(cost centre, account, period) with no project on it, so a program budget could not
+be derived. ERPNext's Budget can be set against a Project, so budget-versus-utilisation
+is delivered here — the one Phase 11 item the source ERP left open.

@@ -37,6 +37,37 @@ CUSTOM_FIELDS = {
             ),
         },
     ],
+    # Both legs of an inter-unit transfer carry these. They are what the
+    # elimination report finds: at group level the paying unit's expense and the
+    # receiving unit's grant income are the same money seen twice, and a
+    # consolidated statement that added them would overstate both. The flag lives
+    # on the Journal Entry rather than only on the Inter Unit Transfer so that the
+    # ledger itself carries the fact - a consolidation reads GL, not our doctype.
+    "Journal Entry": [
+        {
+            "fieldname": "is_inter_unit",
+            "fieldtype": "Check",
+            "label": "Inter-Unit Transfer",
+            "insert_after": "user_remark",
+            "read_only": 1,
+            "no_copy": 1,
+            "description": (
+                "Set by Inter Unit Transfer. Both legs of the transfer are excluded "
+                "from a consolidated statement and disclosed as an elimination."
+            ),
+        },
+        {
+            "fieldname": "counterparty_company",
+            "fieldtype": "Link",
+            "options": "Company",
+            "label": "Counterparty Unit",
+            "insert_after": "is_inter_unit",
+            "read_only": 1,
+            "no_copy": 1,
+            "depends_on": "is_inter_unit",
+            "description": "The other unit of the Trust in this transfer.",
+        },
+    ],
     "Supplier": [
         {
             "fieldname": "is_municipality",

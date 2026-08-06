@@ -16,6 +16,8 @@
   "property_tax_expense_account",
   "investment_income_account",
   "tds_receivable_account",
+  "institution_transfer_account",
+  "grant_income_account",
   "receipt_prefix",
   "section_registrations",
   "trust_pan",
@@ -103,6 +105,20 @@
    "label": "TDS Receivable Account",
    "options": "Account",
    "description": "Tax deducted at source on investment income. An Asset account: TDS is recoverable, and is not application of income."
+  },
+  {
+   "fieldname": "institution_transfer_account",
+   "fieldtype": "Link",
+   "label": "Transfers to Institutions Account",
+   "options": "Account",
+   "description": "Debited in the paying unit when funds are transferred to another unit of the Trust. Must be an Expense account: it is expenditure of that unit and application of its income, and it is eliminated on consolidation."
+  },
+  {
+   "fieldname": "grant_income_account",
+   "fieldtype": "Link",
+   "label": "Grants Received Account",
+   "options": "Account",
+   "description": "Credited in the receiving unit for a grant from another unit of the Trust. Must be an Income account, and is eliminated on consolidation against the paying unit's expense."
   },
   {
    "default": "80G",

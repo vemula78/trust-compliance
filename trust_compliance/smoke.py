@@ -27,6 +27,13 @@ from trust_compliance.setup.accounting_dimension import (
 COMPANY = "Sai Trust Smoke"
 ABBR = "STS"
 
+#: The receiving unit: a hospital the Trust funds, which keeps its own books and
+#: files its own return. A second company is what makes the inter-unit transfer and
+#: its elimination testable at all - the whole point is that one transfer is two
+#: sets of books.
+HOSPITAL = "Sai Hospital Smoke"
+HOSP_ABBR = "SHU"
+
 #: A concern controlled by a trustee: a section 13(3) interested person. Named
 #: distinctly so that no other fixture's issuer collides with it - the check
 #: matches issuer text, and a collision would refuse an unrelated holding.
@@ -61,13 +68,14 @@ def _first_line(message: str) -> str:
 
 
 def _account(name: str, parent: str, root_type: str, account_type: str | None = None,
-             is_fcra: int = 0, is_administrative: int = 0) -> str:
-    full = f"{name} - {ABBR}"
+             is_fcra: int = 0, is_administrative: int = 0,
+             company: str = COMPANY, abbr: str = ABBR) -> str:
+    full = f"{name} - {abbr}"
     if frappe.db.exists("Account", full):
         return full
     doc = frappe.get_doc({
-        "doctype": "Account", "account_name": name, "company": COMPANY,
-        "parent_account": f"{parent} - {ABBR}", "root_type": root_type,
+        "doctype": "Account", "account_name": name, "company": company,
+        "parent_account": f"{parent} - {abbr}", "root_type": root_type,
         "account_type": account_type, "is_group": 0,
         "is_fcra": is_fcra, "is_administrative": is_administrative,
     })
@@ -88,6 +96,18 @@ def _reset() -> None:
     for donation in frappe.get_all("Trust Donation", filters={"company": COMPANY},
                                    fields=["name", "docstatus"]):
         doc = frappe.get_doc("Trust Donation", donation.name)
+        if doc.docstatus == 1:
+            doc.flags.ignore_permissions = True
+            doc.cancel()
+        doc.delete(ignore_permissions=True, force=True)
+
+    # Inter-unit transfers before the journals: cancelling the transfer cancels
+    # both its legs, one of which lives in the receiving unit's books. Deleting the
+    # journals first would leave the transfer pointing at nothing.
+    for transfer in frappe.get_all("Inter Unit Transfer",
+                                   filters={"from_company": COMPANY},
+                                   fields=["name", "docstatus"]):
+        doc = frappe.get_doc("Inter Unit Transfer", transfer.name)
         if doc.docstatus == 1:
             doc.flags.ignore_permissions = True
             doc.cancel()
@@ -119,15 +139,17 @@ def _reset() -> None:
             doc.cancel()
         doc.delete(ignore_permissions=True, force=True)
 
-    for entry in frappe.get_all("Journal Entry", filters={"company": COMPANY},
-                                fields=["name", "docstatus"]):
-        doc = frappe.get_doc("Journal Entry", entry.name)
-        if doc.docstatus == 1:
-            doc.flags.ignore_permissions = True
-            doc.cancel()
-        doc.delete(ignore_permissions=True, force=True)
+    for company in (COMPANY, HOSPITAL):
+        for entry in frappe.get_all("Journal Entry", filters={"company": company},
+                                    fields=["name", "docstatus"]):
+            doc = frappe.get_doc("Journal Entry", entry.name)
+            if doc.docstatus == 1:
+                doc.flags.ignore_permissions = True
+                doc.cancel()
+            doc.delete(ignore_permissions=True, force=True)
 
     frappe.db.delete("GL Entry", {"company": COMPANY})
+    frappe.db.delete("GL Entry", {"company": HOSPITAL})
     frappe.db.commit()
 
 
@@ -181,6 +203,8 @@ def _setup() -> dict:
                                                 "Equity"),
         "property_tax_expense_account": _account("Property Tax", "Indirect Expenses",
                                                  "Expense"),
+        "institution_transfer_account": _account("Transfers to Institutions",
+                                                 "Indirect Expenses", "Expense"),
         "investment_income_account": _account("Investment Income", "Indirect Income",
                                               "Income"),
         "tds_receivable_account": _account("TDS Receivable", "Tax Assets", "Asset"),
@@ -218,8 +242,11 @@ def _setup() -> dict:
             doc.flags.ignore_permissions = True
             doc.insert()
 
+    receiving = _setup_receiving_unit()
+
     return {
         "accounts": accounts,
+        **receiving,
         "domestic_donor": frappe.db.get_value(
             "Trust Donor", {"donor_name": "Domestic Devotee", "company": COMPANY}),
         "foreign_donor": frappe.db.get_value(
@@ -227,6 +254,89 @@ def _setup() -> dict:
         "anonymous_donor": frappe.db.get_value(
             "Trust Donor", {"donor_name": "Hundi Collection", "company": COMPANY}),
     }
+
+
+def _setup_receiving_unit() -> dict:
+    """A second unit of the Trust, with its own chart, funds and programs.
+
+    Its fund codes are prefixed, because a Fund is named by its code and the code
+    is therefore global while the fund itself belongs to one company. Each unit
+    keeps its own fund master, so H-GEN is the hospital's general fund and is a
+    different fund from the Trust's GEN even though both are unrestricted.
+    """
+    if not frappe.db.exists("Company", HOSPITAL):
+        company = frappe.get_doc({
+            "doctype": "Company", "company_name": HOSPITAL, "abbr": HOSP_ABBR,
+            "default_currency": "INR", "country": "India",
+        })
+        company.flags.ignore_permissions = True
+        company.insert()
+
+    accounts = {
+        "bank_account": _account("Hospital Bank", "Bank Accounts", "Asset", "Bank",
+                                 company=HOSPITAL, abbr=HOSP_ABBR),
+        "grant_income_account": _account("Grants from Trust", "Direct Income", "Income",
+                                         company=HOSPITAL, abbr=HOSP_ABBR),
+        "donation_income_account": _account("Hospital Donations", "Direct Income",
+                                            "Income", company=HOSPITAL,
+                                            abbr=HOSP_ABBR),
+        # Mandatory on every settings row, and rightly so: a hospital unit receives
+        # donations in its own name too, and a receipt cannot be issued without
+        # somewhere to put a corpus donation.
+        "corpus_fund_account": _account("Hospital Corpus", "Equity", "Equity",
+                                        company=HOSPITAL, abbr=HOSP_ABBR),
+    }
+    _account("Medical Consumables", "Indirect Expenses", "Expense",
+             company=HOSPITAL, abbr=HOSP_ABBR)
+    _account("Teaching Materials", "Indirect Expenses", "Expense",
+             company=HOSPITAL, abbr=HOSP_ABBR)
+
+    for fund in [
+        {"fund_code": "H-GEN", "fund_name": "Hospital General Fund",
+         "fund_class": "Unrestricted", "is_default": 1, "is_fcra": 0},
+        {"fund_code": "H-CORPUS", "fund_name": "Hospital Corpus Fund",
+         "fund_class": "Corpus", "is_default": 0, "is_fcra": 0},
+        {"fund_code": "H-FCRA", "fund_name": "Hospital FCRA Fund",
+         "fund_class": "Unrestricted", "is_default": 0, "is_fcra": 1},
+    ]:
+        if frappe.db.exists("Fund", fund["fund_code"]):
+            continue
+        doc = frappe.get_doc({"doctype": "Fund", "company": HOSPITAL, **fund})
+        doc.flags.ignore_permissions = True
+        doc.insert()
+
+    settings = frappe.get_single("Trust Compliance Settings")
+    settings.company_accounts = [
+        row for row in settings.company_accounts if row.company != HOSPITAL
+    ]
+    settings.append("company_accounts", {"company": HOSPITAL, "receipt_prefix": "80G-H",
+                                         **accounts})
+    settings.flags.ignore_permissions = True
+    settings.save()
+
+    set_fund_mandatory(HOSPITAL, default_fund="H-GEN")
+
+    programs = {
+        "cardiac": _program("Free Cardiac Surgery", HOSPITAL),
+        "education": _program("Free Education KG to PG", HOSPITAL),
+        # A program of the *paying* unit, to prove a transfer cannot be tagged to
+        # one: utilisation is measured where the money is spent.
+        "trust_admin": _program("Trust Administration", COMPANY),
+    }
+
+    return {"hospital_accounts": accounts, "programs": programs}
+
+
+def _program(name: str, company: str) -> str:
+    existing = frappe.db.get_value("Project", {"project_name": name,
+                                               "company": company})
+    if existing:
+        return existing
+    doc = frappe.get_doc({"doctype": "Project", "project_name": name,
+                          "company": company, "status": "Open"})
+    doc.flags.ignore_permissions = True
+    doc.insert()
+    return doc.name
 
 
 def _donate(**kwargs):
@@ -240,10 +350,10 @@ def _donate(**kwargs):
     return doc.reload()
 
 
-def _journal(rows, posting_date="2026-06-20"):
+def _journal(rows, posting_date="2026-06-20", company=COMPANY, project=None):
     doc = frappe.get_doc({
         "doctype": "Journal Entry", "voucher_type": "Journal Entry",
-        "company": COMPANY, "posting_date": posting_date,
+        "company": company, "posting_date": posting_date, "project": project,
         "user_remark": "Smoke test", "accounts": rows,
     })
     doc.flags.ignore_permissions = True
@@ -764,6 +874,246 @@ def queries_investment_transactions():
     return queries.investment_transactions(COMPANY)
 
 
+def _inter_unit(**kwargs):
+    doc = frappe.get_doc({
+        "doctype": "Inter Unit Transfer",
+        "from_company": kwargs.pop("from_company", COMPANY),
+        "to_company": kwargs.pop("to_company", HOSPITAL),
+        "transfer_date": kwargs.pop("transfer_date", "2026-07-01"),
+        "purpose": kwargs.pop(
+            "purpose", "Board resolution dated 25-Jun-2026: fund free treatment"
+        ),
+        **kwargs,
+    })
+    doc.flags.ignore_permissions = True
+    doc.insert()
+    doc.submit()
+    return doc.reload()
+
+
+def _budget(project: str, company: str, account: str, amount: float,
+            fiscal_year: str = "2026-2027") -> str:
+    """A program budget, as ERPNext 16 models it.
+
+    One Budget record is one account and one amount over a period bounded by two
+    Fiscal Years - not a parent with an account table, which is how it was before
+    and how the source ERP's budget line worked.
+    """
+    existing = frappe.db.get_value("Budget", {"project": project,
+                                              "account": account,
+                                              "from_fiscal_year": fiscal_year,
+                                              "docstatus": 1})
+    if existing:
+        return existing
+    doc = frappe.get_doc({
+        "doctype": "Budget", "company": company,
+        "from_fiscal_year": fiscal_year, "to_fiscal_year": fiscal_year,
+        "distribution_frequency": "Yearly",
+        "budget_against": "Project", "project": project,
+        "account": account, "budget_amount": amount,
+    })
+    doc.flags.ignore_permissions = True
+    doc.insert()
+    doc.submit()
+    return doc.name
+
+
+def _check_programs() -> None:
+    """Inter-unit transfers, their elimination, and program utilisation.
+
+    The rule that matters here is that one transfer is two sets of books. The Trust
+    spends, the hospital receives, both file their own returns - and a consolidated
+    statement that added the two would show the group applying income it had merely
+    moved between its own units.
+    """
+    from trust_compliance import queries
+    from trust_compliance.core.inter_unit import build_elimination_summary
+    from trust_compliance.core.program import build_program_utilisation
+
+    print("\n--- inter-unit transfer ---")
+    programs = _setup_receiving_unit()["programs"]
+    _budget(programs["cardiac"], HOSPITAL, f"Medical Consumables - {HOSP_ABBR}",
+            600_000)
+
+    transfer = _inter_unit(amount=1_000_000, from_fund="GEN", to_fund="H-GEN",
+                           program=programs["cardiac"])
+    _check(bool(transfer.from_journal_entry) and bool(transfer.to_journal_entry),
+           "one transfer posted a journal entry in each unit")
+
+    paying = frappe.get_all(
+        "GL Entry",
+        filters={"voucher_no": transfer.from_journal_entry, "is_cancelled": 0},
+        fields=["company", "account", "debit", "credit", "fund", "project"])
+    _check(all(row.company == COMPANY for row in paying),
+           "the paying leg is in the Trust's books")
+    _check(any(row.account.startswith("Transfers to Institutions")
+               and flt(row.debit) == 1_000_000 for row in paying),
+           "the Trust's expense account is debited: a transfer is application of "
+           "its income")
+    _check(any(row.account.startswith("Domestic Bank")
+               and flt(row.credit) == 1_000_000 for row in paying),
+           "the Trust's bank is credited")
+    _check(all(row.fund == "GEN" for row in paying),
+           "both of the Trust's legs carry the paying fund")
+    _check(not any(row.project for row in paying),
+           "the receiving unit's program is not tagged onto the Trust's own ledger")
+
+    receiving = frappe.get_all(
+        "GL Entry",
+        filters={"voucher_no": transfer.to_journal_entry, "is_cancelled": 0},
+        fields=["company", "account", "debit", "credit", "fund", "project"])
+    _check(all(row.company == HOSPITAL for row in receiving),
+           "the receiving leg is in the hospital's books")
+    _check(any(row.account.startswith("Grants from Trust")
+               and flt(row.credit) == 1_000_000 for row in receiving),
+           "the hospital records grant income, not a capital contribution")
+    _check(any(row.account.startswith("Hospital Bank")
+               and flt(row.debit) == 1_000_000 for row in receiving),
+           "the hospital's bank is debited")
+    _check(all(row.fund == "H-GEN" for row in receiving),
+           "the hospital's legs carry its own fund, not the Trust's")
+    _check(all(row.project == programs["cardiac"] for row in receiving),
+           "the grant is tagged to the program it funds")
+
+    flags = frappe.get_all("Journal Entry",
+                           filters={"name": ("in", [transfer.from_journal_entry,
+                                                    transfer.to_journal_entry])},
+                           fields=["name", "company", "is_inter_unit",
+                                   "counterparty_company"])
+    _check(all(row.is_inter_unit for row in flags),
+           "both journal entries are flagged inter-unit in the ledger itself")
+    _check({row.company: row.counterparty_company for row in flags}
+           == {COMPANY: HOSPITAL, HOSPITAL: COMPANY},
+           "each entry names the other unit as counterparty")
+
+    print("\n--- inter-unit refusals ---")
+    _expect_refusal(
+        "transferring corpus to another unit",
+        lambda: _inter_unit(amount=1_000, from_fund="CORPUS", to_fund="H-GEN"),
+    )
+    _expect_refusal(
+        "transferring foreign contribution to another unit (FCRA s.7)",
+        lambda: _inter_unit(amount=1_000, from_fund="FCRA-GEN", to_fund="H-GEN"),
+    )
+    _expect_refusal(
+        "receiving a grant into the receiving unit's corpus",
+        lambda: _inter_unit(amount=1_000, from_fund="GEN", to_fund="H-CORPUS"),
+    )
+    _expect_refusal(
+        "receiving a grant into the receiving unit's FCRA fund",
+        lambda: _inter_unit(amount=1_000, from_fund="GEN", to_fund="H-FCRA"),
+    )
+    _expect_refusal(
+        "a unit transferring to itself",
+        lambda: _inter_unit(amount=1_000, to_company=COMPANY, from_fund="GEN",
+                            to_fund="HOSP"),
+    )
+    _expect_refusal(
+        "using a fund of the wrong unit",
+        lambda: _inter_unit(amount=1_000, from_fund="GEN", to_fund="HOSP"),
+    )
+    _expect_refusal(
+        "tagging the transfer to a program of the paying unit",
+        lambda: _inter_unit(amount=1_000, from_fund="GEN", to_fund="H-GEN",
+                            program=programs["trust_admin"]),
+    )
+
+    print("\n--- the receiving unit spends on the program ---")
+    _journal(
+        [
+            {"account": f"Medical Consumables - {HOSP_ABBR}",
+             "debit_in_account_currency": 400_000, "fund": "H-GEN",
+             "project": programs["cardiac"]},
+            {"account": f"Hospital Bank - {HOSP_ABBR}",
+             "credit_in_account_currency": 400_000, "fund": "H-GEN",
+             "project": programs["cardiac"]},
+        ],
+        posting_date="2026-08-10", company=HOSPITAL, project=programs["cardiac"],
+    )
+    # Deliberately untagged: the report must exclude it from every program and
+    # disclose it, because that difference is what an auditor reconciles against
+    # the Income and Expenditure statement.
+    _journal(
+        [
+            {"account": f"Teaching Materials - {HOSP_ABBR}",
+             "debit_in_account_currency": 25_000, "fund": "H-GEN"},
+            {"account": f"Hospital Bank - {HOSP_ABBR}",
+             "credit_in_account_currency": 25_000, "fund": "H-GEN"},
+        ],
+        posting_date="2026-08-11", company=HOSPITAL,
+    )
+
+    print("\n--- program utilisation ---")
+    utilisation = build_program_utilisation(
+        queries.gl_rows(HOSPITAL),
+        queries.programs(HOSPITAL),
+        queries.project_budgets(HOSPITAL, from_date="2026-04-01",
+                                to_date="2027-03-31"),
+        from_date="2026-04-01", to_date="2027-03-31",
+    )
+    by_program = {row["program"]: row for row in utilisation["rows"]}
+    cardiac = by_program[programs["cardiac"]]
+    _check(flt(cardiac["income"]) == 1_000_000,
+           f"the program shows the grant it was given (got {cardiac['income']})")
+    _check(flt(cardiac["expense"]) == 400_000,
+           f"the program shows what it spent (got {cardiac['expense']})")
+    _check(flt(cardiac["budget"]) == 600_000,
+           f"budget read from ERPNext's Budget against the project "
+           f"(got {cardiac['budget']})")
+    _check(cardiac["utilised_pct"] == 66.7,
+           f"utilisation is spend over budget (got {cardiac['utilised_pct']})")
+    _check(not cardiac["over_budget"], "the program is within its budget")
+    _check(by_program[programs["education"]]["utilised_pct"] is None,
+           "a program with no budget reports no utilisation rather than zero")
+    _check(flt(utilisation["untagged"]["expense"]) == 25_000,
+           f"spending with no program is disclosed, not pooled into one "
+           f"(got {utilisation['untagged']['expense']})")
+    _check(all(fund["fund"] == "H-GEN" for fund in cardiac["by_fund"]),
+           "the program's money is attributed to the fund that paid for it")
+
+    print("\n--- consolidation eliminations ---")
+    rows = queries.inter_unit_gl_rows([COMPANY, HOSPITAL])
+    summary = build_elimination_summary(rows)
+    _check(flt(summary["eliminated_expense"]) == 1_000_000,
+           f"the Trust's expense to eliminate is 1,000,000 "
+           f"(got {summary['eliminated_expense']})")
+    _check(flt(summary["eliminated_income"]) == 1_000_000,
+           f"the hospital's grant income to eliminate is 1,000,000 "
+           f"(got {summary['eliminated_income']})")
+    _check(summary["is_balanced"],
+           "both sides of the elimination agree, so it can be applied")
+    _check(flt(summary["total_removed"]) == 2_000_000,
+           "the group's totals lose twice the transfer: once from income, once "
+           "from expenditure")
+    _check(summary["rows"] == [{"from_company": COMPANY, "to_company": HOSPITAL,
+                                "amount": 1_000_000}],
+           "the elimination is disclosed per pair of units")
+    bank_legs = sum(flt(row["debit"]) + flt(row["credit"]) for row in rows
+                    if row["root_type"] == "Asset")
+    _check(bank_legs == 2_000_000 and flt(summary["net_transferred"]) == 1_000_000,
+           f"the two bank legs are in the data ({bank_legs}) and are not eliminated: "
+           f"the cash really did move between the units")
+
+    print("\n--- cancelling a transfer cancels both legs ---")
+    second = _inter_unit(amount=5_000, from_fund="GEN", to_fund="H-GEN",
+                         transfer_date="2026-07-02")
+    second_legs = [second.from_journal_entry, second.to_journal_entry]
+    doc = frappe.get_doc("Inter Unit Transfer", second.name)
+    doc.flags.ignore_permissions = True
+    doc.cancel()
+    cancelled = frappe.get_all("Journal Entry", filters={"name": ("in", second_legs)},
+                               fields=["name", "docstatus"])
+    _check(all(row.docstatus == 2 for row in cancelled),
+           "cancelling the transfer cancelled the leg in each unit's books")
+    after = build_elimination_summary(queries.inter_unit_gl_rows([COMPANY, HOSPITAL]))
+    _check(flt(after["net_transferred"]) == 1_000_000,
+           f"the cancelled transfer leaves the elimination unchanged "
+           f"(got {after['net_transferred']})")
+    _check(after["is_balanced"],
+           "the elimination stays balanced after a cancellation - neither leg was "
+           "left behind")
+
+
 def _gl_rows() -> list[dict]:
     """Live GL entries joined to their account's root type and admin flag.
 
@@ -885,6 +1235,8 @@ REPORTS = [
     "Form 10BD Statement",
     "Property Register",
     "Investment Register",
+    "Program Utilisation",
+    "Inter Unit Eliminations",
 ]
 
 
@@ -1153,6 +1505,11 @@ def run() -> int:
     _check_property_register()
     _check_investments()
     _check_reports()
+    # After the fund-balance reconciliation on purpose. The inter-unit transfer is
+    # a plain expense debit in the Trust's books, so running it earlier would move
+    # the absolute figures asserted in _check_reports without testing anything new
+    # about them - and those absolute figures are what makes that check meaningful.
+    _check_programs()
     _check_query_reports(context)
 
     frappe.db.commit()

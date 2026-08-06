@@ -30,6 +30,7 @@ def gl_rows(company: str, upto: object = None) -> list[dict]:
         f"""
         SELECT gle.account, gle.debit, gle.credit, gle.fund, gle.posting_date,
                gle.voucher_type, gle.voucher_no, gle.remarks, gle.party,
+               gle.project,
                acc.root_type, acc.account_type, acc.is_administrative
         FROM `tabGL Entry` gle
         JOIN `tabAccount` acc ON acc.name = gle.account
@@ -200,6 +201,99 @@ def investment_transactions(company: str) -> list[dict]:
         fields=["name", "investment", "kind", "transaction_date as date",
                 "gross_amount as amount", "tds", "fund"],
         order_by="transaction_date, name",
+    )
+
+
+def programs(company: str) -> list[dict]:
+    """Programs, which are ERPNext Projects.
+
+    Cancelled projects are included: a programme closed part-way through a year
+    still holds that year's expenditure, and dropping it would move that spending
+    into the untagged total instead of onto the schedule.
+    """
+    return frappe.get_all(
+        "Project",
+        filters={"company": company},
+        fields=["name", "project_name", "status", "company"],
+        order_by="project_name",
+    )
+
+
+def project_budgets(company: str, from_date=None, to_date=None) -> list[dict]:
+    """Budget amounts per program, from ERPNext's own Budget against a Project.
+
+    This is what the source ERP could not do: its budget line was keyed on
+    (cost centre, account, period) with no project on it, so program budgets had
+    to be left out of the utilisation report. ERPNext's Budget can be set against
+    a Project, so the budget column here comes from the same master the rest of
+    ERPNext's budget controls read - not a second one that could drift from it.
+
+    In ERPNext 16 a Budget is one account with one amount over a period, not a
+    parent with an account table, so several Budget records make up one program's
+    budget and the caller sums them.
+
+    Only submitted budgets count; a draft budget has not been approved by anyone.
+
+    Budgets are matched to the report window by *overlap*, not containment: a
+    budget period need not line up with the window being reported, and a budget
+    that covers part of the window is still the authority for that part. A window
+    spanning two budget years therefore sums both, which is what "budget for this
+    period" means.
+    """
+    filters: dict = {"company": company, "budget_against": "Project", "docstatus": 1}
+    if from_date:
+        filters["budget_end_date"] = (">=", from_date)
+    if to_date:
+        filters["budget_start_date"] = ("<=", to_date)
+
+    return frappe.get_all(
+        "Budget",
+        filters=filters,
+        fields=["name", "project", "account", "budget_amount",
+                "budget_start_date", "budget_end_date"],
+    )
+
+
+def inter_unit_gl_rows(companies: list[str], from_date=None, to_date=None) -> list[dict]:
+    """GL rows of the vouchers flagged as inter-unit transfers.
+
+    Joined through Journal Entry because the flag lives there: a consolidation
+    reads the ledger, and the ledger is where the fact that these two entries are
+    one transfer has to be recorded. Both units' rows are read in one query so the
+    two sides can be reconciled against each other - the elimination is only
+    applicable if they are equal.
+    """
+    if not companies:
+        return []
+
+    conditions = [
+        "gle.is_cancelled = 0",
+        "gle.voucher_type = 'Journal Entry'",
+        "je.is_inter_unit = 1",
+        "gle.company IN %(companies)s",
+    ]
+    params: dict = {"companies": tuple(companies)}
+    if from_date:
+        conditions.append("gle.posting_date >= %(from_date)s")
+        params["from_date"] = from_date
+    if to_date:
+        conditions.append("gle.posting_date <= %(to_date)s")
+        params["to_date"] = to_date
+
+    return frappe.db.sql(
+        f"""
+        SELECT gle.company, gle.account, gle.debit, gle.credit, gle.fund,
+               gle.posting_date, gle.voucher_no, gle.project,
+               je.counterparty_company, je.user_remark,
+               acc.root_type
+        FROM `tabGL Entry` gle
+        JOIN `tabJournal Entry` je ON je.name = gle.voucher_no
+        JOIN `tabAccount` acc ON acc.name = gle.account
+        WHERE {" AND ".join(conditions)}
+        ORDER BY gle.posting_date, gle.voucher_no
+        """,
+        params,
+        as_dict=True,
     )
 
 
