@@ -149,7 +149,12 @@ Then, in this order:
 4. Fill in **Trust Compliance Settings → Company Accounts**.
 5. Optionally make the dimension mandatory:
    `trust_compliance.setup.accounting_dimension.set_fund_mandatory(company, default_fund)`.
-6. **Number format — handled for you, with one caveat.** Installing the app sets the
+6. **Mark the section 13(3) interested persons** on Trust Donor — the authors and
+   founders, trustees and managers, substantial contributors, their relatives, and
+   the concerns they control. The investment check can only refuse a person somebody
+   has marked, so an unmarked trustee's company is an accepted investment. Create a
+   Trust Donor record for a concern the Trust has never received a donation from.
+7. **Number format — handled for you, with one caveat.** Installing the app sets the
    number format to `#,##,###.##` if the site is still on Frappe's untouched default,
    because Indian lakh/crore grouping *and* Indian amount-in-words both derive from
    it, and on an 80G receipt the amount in words is the operative figure. A clean-install
