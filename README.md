@@ -112,7 +112,7 @@ Then, in this order:
 
 ## Reports
 
-Six script reports, all driven from one GL query (`trust_compliance/queries.py`) so
+Seven script reports, all driven from one GL query (`trust_compliance/queries.py`) so
 no two can disagree with the ledger, and all computed by the tested pure functions:
 
 | Report | Notes |
