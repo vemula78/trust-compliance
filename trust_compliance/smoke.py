@@ -485,13 +485,22 @@ def _check_investments() -> None:
     85% application test.
     """
     print("\n--- investment modes ---")
+    from trust_compliance.core.investment import PERMITTED_MODES, RULE_17C_MODES
+
     modes = frappe.get_all("Investment Mode",
-                           fields=["name", "statute", "citation_verified"])
-    _check(len(modes) >= 16, f"permitted-mode master seeded ({len(modes)} modes)")
-    _check(all(m.citation_verified for m in modes if m.statute == "Section 11(5)"),
-           "every section 11(5) clause is seeded as citation-verified")
-    _check(not any(m.citation_verified for m in modes if m.statute == "Rule 17C"),
-           "every Rule 17C clause is seeded UNVERIFIED, pending the notified text")
+                           fields=["name", "clause", "statute", "citation_verified"])
+    seeded = {m.clause for m in modes}
+    _check(set(PERMITTED_MODES) <= seeded,
+           f"every shipped clause is in the master ({len(PERMITTED_MODES)} shipped, "
+           f"{len(modes)} present)")
+    _check(all(m.citation_verified for m in modes
+               if m.statute == "Section 11(5)" and m.clause in PERMITTED_MODES),
+           "every shipped section 11(5) clause is citation-verified")
+    # Rule 17C is deliberately not shipped: the numbering the app once carried was
+    # materially wrong, and a wrong citation on an audit schedule is worse than
+    # none. The auditor adds the notified clauses to the master themselves.
+    _check(RULE_17C_MODES == {},
+           "no Rule 17C clause is shipped; the master is where they are added")
 
     print("\n--- corpus invested in a permitted mode ---")
     fd = _invest(investment_name="SBI Corpus FD 2026", fund="CORPUS",
@@ -523,13 +532,19 @@ def _check_investments() -> None:
                         issuer="Some Private Ltd", issuer_is_psu=0, cost=10_000),
     )
     _expect_refusal(
-        "an investment against a disabled mode",
-        lambda: (frappe.db.set_value("Investment Mode", "17C(v)", "disabled", 1),
+        "an investment against a withdrawn (disabled) mode",
+        lambda: (frappe.db.set_value("Investment Mode", "11(5)(iv)", "disabled", 1),
                  _invest(investment_name="Disabled Mode Test", fund="GEN",
-                         mode="17C(v)", instrument_type="Other",
-                         issuer="X", cost=1_000))[1],
+                         mode="11(5)(iv)", instrument_type="Other",
+                         issuer="Unit Trust of India", cost=1_000))[1],
     )
-    frappe.db.set_value("Investment Mode", "17C(v)", "disabled", 0)
+    frappe.db.set_value("Investment Mode", "11(5)(iv)", "disabled", 0)
+    _expect_refusal(
+        "equity booked under a clause that does not permit equity",
+        lambda: _invest(investment_name="Mislabelled Equity", fund="GEN",
+                        mode="11(5)(iii)", instrument_type="Equity Shares",
+                        issuer="Some PSU Ltd", issuer_is_psu=1, cost=5_000),
+    )
     # Corpus-ness is derived, not entered: an investment bought from a Corpus
     # fund is a corpus holding whatever the form says, and one bought from a
     # spendable fund is not. Passing the wrong flag is corrected, not refused -
