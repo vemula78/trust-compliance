@@ -433,8 +433,12 @@ def _check_property_register() -> None:
         get_property_summary,
     )
     summary = get_property_summary(prop_name)
-    _check(flt(summary["tax"]["outstanding"]) == 42_000,
-           f"property summary shows 42,000 tax outstanding (got {summary['tax']['outstanding']})")
+    _check(flt(summary["tax"]["total"]) == 42_000,
+           f"property summary shows 42,000 tax billed (got {summary['tax']['total']})")
+    # The demand was paid above, so nothing is outstanding - and this figure is
+    # read from the invoice, not from the schedule's status field.
+    _check(flt(summary["tax"]["outstanding"]) == 0,
+           f"property summary shows nothing outstanding (got {summary['tax']['outstanding']})")
     _check(flt(summary["maintenance"]["total"]) == 65_000,
            f"property summary shows 65,000 maintenance (got {summary['maintenance']['total']})")
 

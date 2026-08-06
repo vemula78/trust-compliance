@@ -193,13 +193,11 @@ def _default_uom() -> str:
     )
 
 
-def mark_paid_from_payment(purchase_invoice: str) -> None:
-    """Flip the schedule to Paid once its invoice is settled.
+def refresh_status(purchase_invoice: str) -> None:
+    """Re-derive a schedule's status from its invoice's outstanding amount.
 
-    Called from the Purchase Invoice `on_update_after_submit` hook, which is what
-    ERPNext fires when an invoice's outstanding amount changes on payment. The
-    status is derived from the invoice rather than set by hand, so the register can
-    never claim a demand is paid when the ledger says otherwise.
+    The status is never set by hand. It is recomputed from the ledger, so the
+    register cannot claim a demand is paid when AP says it is not.
     """
     schedule = frappe.db.get_value(
         "Property Tax Schedule",
@@ -210,10 +208,17 @@ def mark_paid_from_payment(purchase_invoice: str) -> None:
     if not schedule:
         return
 
-    outstanding = flt(
-        frappe.db.get_value("Purchase Invoice", purchase_invoice, "outstanding_amount")
+    invoice = frappe.db.get_value(
+        "Purchase Invoice", purchase_invoice, ["outstanding_amount", "docstatus"],
+        as_dict=True,
     )
-    status = "Paid" if outstanding <= 0 else "Billed"
+    if not invoice or invoice.docstatus == 2:
+        status = "Unpaid"
+    elif flt(invoice.outstanding_amount) <= 0:
+        status = "Paid"
+    else:
+        status = "Billed"
+
     if status != schedule.status:
         frappe.db.set_value(
             "Property Tax Schedule", schedule.name, "status", status,
@@ -221,5 +226,27 @@ def mark_paid_from_payment(purchase_invoice: str) -> None:
         )
 
 
-def on_purchase_invoice_update(doc, method=None) -> None:
-    mark_paid_from_payment(doc.name)
+def update_linked_tax_schedules(doc, method=None) -> None:
+    """Refresh any tax schedule this payment voucher touches.
+
+    Hooked on Payment Entry and Journal Entry submit/cancel rather than on
+    Purchase Invoice: ERPNext settles an invoice by writing `outstanding_amount`
+    with a direct database update, which does *not* fire the invoice's document
+    events. Watching the payment vouchers is what actually catches a payment.
+
+    Both routes are covered because a Trust pays a municipality either way - a
+    Payment Entry from the bank, or a Journal Entry when the payment is part of a
+    larger voucher.
+    """
+    invoices: set[str] = set()
+
+    for row in doc.get("references") or []:
+        if row.get("reference_doctype") == "Purchase Invoice" and row.get("reference_name"):
+            invoices.add(row.reference_name)
+
+    for row in doc.get("accounts") or []:
+        if row.get("reference_type") == "Purchase Invoice" and row.get("reference_name"):
+            invoices.add(row.reference_name)
+
+    for invoice in invoices:
+        refresh_status(invoice)

@@ -39,13 +39,20 @@ def execute(filters: dict | None = None):
                COALESCE(mnt.open_jobs, 0)    AS open_jobs
         FROM `tabTrust Property` p
         LEFT JOIN (
-            SELECT property,
-                   SUM(amount) AS total,
-                   SUM(CASE WHEN status != 'Paid' THEN amount ELSE 0 END) AS outstanding,
-                   MIN(CASE WHEN status != 'Paid' THEN due_date END) AS next_due
-            FROM `tabProperty Tax Schedule`
-            WHERE docstatus = 1
-            GROUP BY property
+            -- Outstanding is read from the invoice, not from the schedule's own
+            -- status field. The status is a convenience for list filtering; the
+            -- ledger is the truth, so the register stays correct even if a status
+            -- refresh is ever missed.
+            SELECT pts.property,
+                   SUM(pts.amount) AS total,
+                   SUM(COALESCE(pi.outstanding_amount, pts.amount)) AS outstanding,
+                   MIN(CASE WHEN COALESCE(pi.outstanding_amount, pts.amount) > 0
+                            THEN pts.due_date END) AS next_due
+            FROM `tabProperty Tax Schedule` pts
+            LEFT JOIN `tabPurchase Invoice` pi
+                   ON pi.name = pts.purchase_invoice AND pi.docstatus = 1
+            WHERE pts.docstatus = 1
+            GROUP BY pts.property
         ) tax ON tax.property = p.name
         LEFT JOIN (
             SELECT property,

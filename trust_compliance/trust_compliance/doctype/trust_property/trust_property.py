@@ -96,13 +96,18 @@ def get_property_summary(property_name: str) -> dict:
     """
     frappe.get_doc("Trust Property", property_name).check_permission("read")
 
+    # Outstanding comes from the invoice, not the schedule's status field: the
+    # ledger is the truth and the status is only a convenience for list filtering.
     tax = frappe.db.sql(
         """
-        SELECT COALESCE(SUM(amount), 0) AS total,
-               COALESCE(SUM(CASE WHEN status != 'Paid' THEN amount ELSE 0 END), 0) AS outstanding,
-               MIN(CASE WHEN status != 'Paid' THEN due_date END) AS next_due
-        FROM `tabProperty Tax Schedule`
-        WHERE property = %s AND docstatus = 1
+        SELECT COALESCE(SUM(pts.amount), 0) AS total,
+               COALESCE(SUM(COALESCE(pi.outstanding_amount, pts.amount)), 0) AS outstanding,
+               MIN(CASE WHEN COALESCE(pi.outstanding_amount, pts.amount) > 0
+                        THEN pts.due_date END) AS next_due
+        FROM `tabProperty Tax Schedule` pts
+        LEFT JOIN `tabPurchase Invoice` pi
+               ON pi.name = pts.purchase_invoice AND pi.docstatus = 1
+        WHERE pts.property = %s AND pts.docstatus = 1
         """,
         (property_name,), as_dict=True,
     )[0]

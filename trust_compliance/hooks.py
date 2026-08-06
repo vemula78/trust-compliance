@@ -33,12 +33,14 @@ before_uninstall = "trust_compliance.install.before_uninstall"
 # manual journal fails with a field-level message while it is still a draft,
 # instead of only at submission.
 # ---------------------------------------------------------------------------
+_TAX_STATUS_HOOK = (
+    "trust_compliance.trust_compliance.doctype.property_tax_schedule"
+    ".property_tax_schedule.update_linked_tax_schedules"
+)
+
 doc_events = {
     "*": {
         "on_submit": "trust_compliance.fcra.enforce_on_submitted_voucher",
-    },
-    "Journal Entry": {
-        "validate": "trust_compliance.fcra.enforce_on_journal_entry_draft",
     },
     "Account": {
         "validate": "trust_compliance.fcra.validate_account_flags",
@@ -46,11 +48,18 @@ doc_events = {
     # A property-tax demand's Paid status is derived from its invoice's outstanding
     # amount rather than set by hand, so the register cannot claim a demand is paid
     # when the ledger says otherwise.
-    "Purchase Invoice": {
-        "on_update_after_submit": (
-            "trust_compliance.trust_compliance.doctype.property_tax_schedule"
-            ".property_tax_schedule.on_purchase_invoice_update"
-        ),
+    #
+    # Hooked on the payment vouchers, not on Purchase Invoice: ERPNext settles an
+    # invoice by writing `outstanding_amount` with a direct database update, which
+    # does not fire the invoice's own document events.
+    "Payment Entry": {
+        "on_submit": _TAX_STATUS_HOOK,
+        "on_cancel": _TAX_STATUS_HOOK,
+    },
+    "Journal Entry": {
+        "validate": "trust_compliance.fcra.enforce_on_journal_entry_draft",
+        "on_submit": _TAX_STATUS_HOOK,
+        "on_cancel": _TAX_STATUS_HOOK,
     },
 }
 
