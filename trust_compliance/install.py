@@ -19,7 +19,54 @@ def after_install() -> None:
     # are the Trust's own choice.
     create_default_investment_modes()
     _ensure_settings_singleton()
+    _adopt_indian_number_format()
     frappe.db.commit()
+
+
+#: Frappe's own out-of-the-box default. Only this value is replaced - anything
+#: else is a choice somebody made, and is left alone.
+FRAMEWORK_DEFAULT_NUMBER_FORMAT = "#,###.##"
+INDIAN_NUMBER_FORMAT = "#,##,###.##"
+
+
+def _adopt_indian_number_format() -> None:
+    """Set Indian lakh/crore numbering, but only if nothing has been chosen.
+
+    This app exists solely for Indian statutory compliance, and Frappe derives
+    Indian grouping *and* Indian amount-in-words from the site's number format.
+    Left on the framework default, a fresh install prints "Rupees Five Hundred And
+    Sixty Thousand only" and Rs 560,000.00 on an 80G receipt where the law expects
+    "Rupees Five Lakh, Sixty Thousand only" and Rs 5,60,000.00 - and on a receipt
+    the amount in words is the operative figure, read by the donor and by an
+    assessing officer.
+
+    Relying on the administrator to read an install step was tested and found
+    wanting: a clean-install rehearsal produced a working system that quietly
+    issued wrong receipts. So the default is completed here.
+
+    It is narrow on purpose. Only Frappe's untouched default is replaced; any other
+    value means somebody chose it, and a site-global setting is theirs, not ours.
+    The document is saved rather than the field written directly, because the
+    formatting layer reads the DefaultValue table that only `save()` propagates to.
+    """
+    current = frappe.db.get_single_value("System Settings", "number_format")
+    if current and current != FRAMEWORK_DEFAULT_NUMBER_FORMAT:
+        return
+
+    settings = frappe.get_single("System Settings")
+    settings.number_format = INDIAN_NUMBER_FORMAT
+    settings.flags.ignore_permissions = True
+    settings.flags.ignore_mandatory = True
+    settings.save()
+
+    frappe.msgprint(
+        frappe._(
+            "Number format set to {0} for Indian lakh/crore grouping and "
+            "amount-in-words, which 80G receipts depend on. Change it in System "
+            "Settings if that is not wanted."
+        ).format(INDIAN_NUMBER_FORMAT),
+        title=frappe._("Trust Compliance"),
+    )
 
 
 def before_uninstall() -> None:
