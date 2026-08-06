@@ -131,6 +131,21 @@ rendered per donor per financial year from the same computation that produces th
 10BD statement — so the certificate a donor holds and the return filed with the
 department cannot disagree. It is reachable from a button on Trust Donor.
 
+## Upgrading
+
+`bench migrate` does **not** re-sync an existing Workspace — Frappe treats
+workspaces as user-customisable once created, so a release that adds doctypes or
+reports will not show them in the sidebar. After upgrading:
+
+```bash
+bench --site <site> execute frappe.delete_doc --kwargs '{"doctype":"Workspace","name":"Trust Compliance","force":1,"ignore_permissions":1}'
+bench --site <site> migrate
+```
+
+That recreates the workspace from the app's definition. Anything an administrator
+customised on it by hand is lost, which is why it is a deliberate step rather than
+something the app does on migrate.
+
 ## Known gaps
 
 Tracked deliberately, not hidden:
