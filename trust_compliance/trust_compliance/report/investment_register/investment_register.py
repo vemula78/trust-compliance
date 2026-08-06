@@ -10,6 +10,13 @@ only showed the status recorded at purchase would hide exactly that.
 
 Book value is cost less redemptions. Trusts carry investments at cost, not fair
 value, so no revaluation is applied.
+
+Two standing rules that the figures here depend on, recorded once rather than
+repeated in the on-screen message: interest and dividend are income of the year
+and never corpus, so they are included in the 85% application test; and TDS is a
+recoverable asset, not application of income. The message carries findings only -
+an explanation printed on every run stops being read, and a long message also
+squeezes the table itself off the screen.
 """
 
 from __future__ import annotations
@@ -115,11 +122,9 @@ def _message(report: dict, rows: list[dict], company: str) -> str:
     )
     if corpus_value:
         lines.append(
-            _(
-                "Corpus held in investments: {0}. Since Finance Act 2021 a corpus "
-                "donation keeps its section 11(1)(d) exemption only while it stays in "
-                "an 11(5) mode and separately identifiable."
-            ).format(money(corpus_value))
+            _("Of which corpus: {0}, all of which must stay in an 11(5) mode.").format(
+                money(corpus_value)
+            )
         )
 
     unverified = sum(
@@ -128,23 +133,10 @@ def _message(report: dict, rows: list[dict], company: str) -> str:
     if unverified:
         lines.append(
             _(
-                "{0} sits under a clause whose citation has not been verified against "
-                "the currently notified text of Rule 17C. The investment is treated as "
-                "permitted, but confirm the clause number before quoting it on an audit "
-                "schedule or a Form 10B annexure, then tick Citation Verified on the "
-                "Investment Mode."
+                "{0} sits under a Rule 17C clause whose citation is unverified - confirm "
+                "it before quoting it on an audit schedule, then tick Citation Verified."
             ).format(money(unverified))
         )
-
-    lines.append(
-        "<i>"
-        + _(
-            "Interest and dividend shown here is income of the year, not corpus, and "
-            "is included in the 85% application test. TDS is a recoverable asset and "
-            "is not application of income."
-        )
-        + "</i>"
-    )
 
     return "<br>".join(lines)
 
