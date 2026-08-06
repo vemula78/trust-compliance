@@ -16,6 +16,9 @@
   "country",
   "is_anonymous",
   "disabled",
+  "section_interested_person",
+  "is_interested_person",
+  "interested_person_basis",
   "section_contact",
   "email",
   "phone",
@@ -92,6 +95,28 @@
    "fieldname": "disabled",
    "fieldtype": "Check",
    "label": "Disabled"
+  },
+  {
+   "fieldname": "section_interested_person",
+   "fieldtype": "Section Break",
+   "label": "Section 13(3) Interested Person"
+  },
+  {
+   "default": "0",
+   "fieldname": "is_interested_person",
+   "fieldtype": "Check",
+   "in_standard_filter": 1,
+   "label": "Interested Person u/s 13(3)",
+   "description": "Tick for an author or founder of the Trust, a trustee or manager, a substantial contributor (aggregate contribution over Rs 50,000), a relative of any of them, or a concern in which any of them has a substantial interest. Trust funds invested with or in such a person breach section 13(2)(h) and cost the Trust its exemption on that income, so this flag refuses the investment at entry."
+  },
+  {
+   "depends_on": "is_interested_person",
+   "fieldname": "interested_person_basis",
+   "fieldtype": "Select",
+   "label": "Basis",
+   "mandatory_depends_on": "is_interested_person",
+   "options": "\nAuthor or Founder\nTrustee or Manager\nSubstantial Contributor\nRelative of an Interested Person\nConcern with Substantial Interest",
+   "description": "Which limb of section 13(3) applies. Recorded because the trustees must be able to show the auditor why a person was treated as interested."
   },
   {
    "fieldname": "section_contact",

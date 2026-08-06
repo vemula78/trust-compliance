@@ -190,11 +190,17 @@ def validate_investment_mode(
     investment: {"instrument_type", "mode_clause", "is_equity", "issuer",
                  "issuer_is_psu", "counterparty", "amount"}
     fund: {"name", "fund_class", "is_fcra"}
+    prohibited_parties: every identifier by which a section 13(3) person may
+        appear on an investment - both the party record's id and the name it is
+        known by - matched case-insensitively against `counterparty` and `issuer`.
     """
     errors: list[str] = []
     # A generator would be consumed by the first membership test, silently
-    # letting every later prohibited counterparty through.
-    prohibited = frozenset(prohibited_parties)
+    # letting every later prohibited counterparty through. Folded to lower case
+    # because one of the identifiers matched is a typed-in issuer name.
+    prohibited = frozenset(
+        str(party).strip().lower() for party in prohibited_parties if party
+    )
 
     master = modes if modes is not None else PERMITTED_MODES
     clause = investment.get("mode_clause")
@@ -250,14 +256,19 @@ def validate_investment_mode(
                 f"company; issuer {investment.get('issuer')} is not one."
             )
 
-    counterparty = investment.get("counterparty")
-    if counterparty is not None and counterparty in prohibited:
-        errors.append(
-            f"Counterparty {counterparty} is a person of substantial interest "
-            "under section 13(2)(h)/13(3) (a founder, trustee, substantial "
-            "contributor, their relative, or a concern they control); the "
-            "investment is refused."
-        )
+    # Both parties are tested. Section 13(2)(h) bites on the concern the funds are
+    # invested *in*, which is the issuer; the counterparty is who the Trust dealt
+    # with, and 13(2) catches that too. Refusing only one of them would leave the
+    # commoner case - a trustee's own company as the issuer - unrefused.
+    for field, label in (("counterparty", "Counterparty"), ("issuer", "Issuer")):
+        party = investment.get(field)
+        if party and str(party).strip().lower() in prohibited:
+            errors.append(
+                f"{label} {party} is a person of substantial interest "
+                "under section 13(2)(h)/13(3) (a founder, trustee, substantial "
+                "contributor, their relative, or a concern they control); the "
+                "investment is refused."
+            )
 
     if float(investment.get("amount") or 0) <= 0:
         errors.append("Investment amount must be greater than zero.")

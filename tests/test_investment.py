@@ -187,6 +187,52 @@ class TestValidateInvestmentMode:
         )
         assert errors == []
 
+    def test_prohibited_issuer_is_refused(self):
+        # Section 13(2)(h) bites on the concern the funds are invested *in*, so
+        # the issuer has to be tested and not only the counterparty - a trustee's
+        # own company is more often the issuer than the intermediary.
+        errors = validate_investment_mode(
+            investment(issuer="Trustee Holdings Pvt Ltd"),
+            CORPUS_FUND,
+            prohibited_parties=["Trustee Holdings Pvt Ltd"],
+        )
+        assert any("Issuer" in error and "13(2)(h)" in error for error in errors)
+
+    def test_prohibited_party_match_ignores_case_and_padding(self):
+        # The issuer is typed in by hand, so an exact-match test would let the
+        # same concern through under a different capitalisation.
+        errors = validate_investment_mode(
+            investment(issuer="  trustee holdings pvt ltd "),
+            CORPUS_FUND,
+            prohibited_parties=["Trustee Holdings Pvt Ltd"],
+        )
+        assert any("13(2)(h)" in error for error in errors)
+
+    def test_blank_party_never_matches(self):
+        # An empty prohibited entry - a donor record with no name - must not turn
+        # every investment that leaves the counterparty blank into a breach.
+        errors = validate_investment_mode(
+            investment(counterparty=None, issuer=""),
+            CORPUS_FUND,
+            prohibited_parties=["", None, "Trustee Holdings Pvt Ltd"],
+        )
+        assert errors == []
+
+    def test_prohibited_party_is_re_checked_in_the_register(self):
+        # A person can become an interested person after the purchase - appointed
+        # a trustee, or crossing the substantial-contribution threshold - which
+        # taints the income from an instrument that was clean when bought.
+        held = investment(issuer="Trustee Holdings Pvt Ltd", cost=500_000,
+                          purchase_date=datetime.date(2026, 6, 1))
+        clean = build_investment_register([held], [], FUNDS)
+        assert clean["rows"][0]["is_compliant"] is True
+
+        tainted = build_investment_register(
+            [held], [], FUNDS, prohibited_parties=["Trustee Holdings Pvt Ltd"]
+        )
+        assert tainted["rows"][0]["is_compliant"] is False
+        assert any("13(2)(h)" in v for v in tainted["rows"][0]["violations"])
+
     def test_zero_amount_is_refused(self):
         errors = validate_investment_mode(investment(amount=0), CORPUS_FUND)
         assert any("greater than zero" in error for error in errors)

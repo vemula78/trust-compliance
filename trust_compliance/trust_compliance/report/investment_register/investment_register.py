@@ -27,6 +27,9 @@ from frappe.utils import flt, fmt_money
 
 from trust_compliance import queries
 from trust_compliance.core.investment import build_investment_register
+from trust_compliance.trust_compliance.doctype.trust_investment.trust_investment import (
+    get_prohibited_parties,
+)
 
 
 def execute(filters: dict | None = None):
@@ -46,6 +49,12 @@ def execute(filters: dict | None = None):
         queries.investment_transactions(company),
         queries.funds(company),
         as_on=as_on,
+        # Read here as well as at purchase: a person becomes an interested person
+        # under section 13(3) by being appointed a trustee or by crossing the
+        # substantial-contribution threshold, neither of which posts a
+        # transaction. Income from an instrument that was clean when bought is
+        # tainted from that day, and this register is where it has to show.
+        prohibited_parties=get_prohibited_parties(company),
         modes=queries.investment_modes(),
     )
 

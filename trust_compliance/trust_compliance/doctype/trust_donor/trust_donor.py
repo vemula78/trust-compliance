@@ -24,6 +24,7 @@ class TrustDonor(Document):
         self._validate_pan()
         self._validate_foreign_donor_has_country()
         self._validate_anonymous_donor_is_not_identified()
+        self._validate_interested_person_is_identified()
 
     def _normalise(self):
         self.donor_name = (self.donor_name or "").strip()
@@ -78,4 +79,24 @@ class TrustDonor(Document):
                     "donor must be reported in Form 10BD; clear one or the other."
                 ).format(self.donor_name),
                 title=_("Section 115BBC"),
+            )
+
+    def _validate_interested_person_is_identified(self):
+        """Section 13(3) describes named persons, so the record must name one.
+
+        An anonymous collection is by definition an unidentified giver; it cannot
+        be established as an author, trustee, substantial contributor or their
+        concern. Allowing the flag there would also be actively harmful: the
+        investment check refuses any instrument naming a flagged record, so a
+        flagged hundi record would refuse lawful investments for a reason nobody
+        could substantiate at audit.
+        """
+        if self.is_interested_person and self.is_anonymous:
+            frappe.throw(
+                _(
+                    "Donor {0} is marked anonymous, so it cannot also be an "
+                    "interested person under section 13(3) - that section applies "
+                    "to identified persons. Clear one or the other."
+                ).format(self.donor_name),
+                title=_("Section 13(3)"),
             )

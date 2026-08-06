@@ -14,7 +14,7 @@ rather than a parallel ledger.
 |---|---|
 | **Fund** | Fund master with the four classes (Corpus, Restricted, Designated, Unrestricted), registered as an ERPNext **Accounting Dimension** so `fund` appears on GL Entry and on every voucher ERPNext posts from. |
 | **FCRA segregation** | Foreign and domestic money can never mix inside one voucher. Enforced on the GL entries a voucher actually produced, inside the submitting transaction — see below. |
-| **Trust Donor** | Donor master with PAN validation (including holder-status cross-check against donor type), country for FC-4, and anonymous-donor handling. |
+| **Trust Donor** | Donor master with PAN validation (including holder-status cross-check against donor type), country for FC-4, anonymous-donor handling, and the **section 13(3) interested-person** flag the investment check reads. |
 | **Trust Donation** | Receipting with gap-free `80G/<FY>/<seq>` numbering per financial year, automatic balanced GL posting, corpus-versus-income routing, Section 269ST cash limit, and a PAN requirement above a configurable value because Form 10BD cannot be filed without one. |
 | **Fund Transfer** | Both legs post to one equity clearing account, so the trial balance is untouched and the whole movement is carried by the fund dimension. Corpus is one-way; FCRA and domestic funds cannot be bridged. |
 | **Property register** | Donated properties with survey number, municipality, extent and valuation; property-tax demands billed **through Accounts Payable**; maintenance and AMC records linked to the vendor's bill. |
@@ -41,6 +41,15 @@ identifiable. So the rules are enforced at posting time:
   account — crediting corpus-FD interest back to corpus would silently remove it
   from the 85% application test. TDS is booked as a **recoverable asset**, and
   reinvested interest is *not* application of income.
+- Funds may not be invested with, or in a concern of, a **section 13(3) interested
+  person** — an author or founder, a trustee or manager, a substantial contributor,
+  their relatives, or a concern in which any of them has a substantial interest.
+  Mark the person on their **Trust Donor** record (`Interested Person u/s 13(3)`,
+  with the limb of 13(3) that applies) and both the counterparty and the issuer are
+  refused from then on. The register re-checks it, because a person *becomes*
+  interested — appointed a trustee, or crossing the contribution threshold —
+  without any transaction being posted, and that taints income from an instrument
+  that was clean when bought.
 
 ## Design
 
@@ -199,12 +208,14 @@ Tracked deliberately, not hidden:
   *property* — the dominant in-kind case — is the Property register's job.
 - **Property register, property tax, maintenance, program accounting** (Phase 11
   of the source ERP) are not ported yet.
-- **The section 13(2)(h)/13(3) prohibited-person check is wired but inert.**
-  `get_prohibited_parties()` returns an empty list, because Trust Donor has no
-  `is_prohibited_person` flag yet. The rule is enforced the moment that field
-  exists and the helper reads it — but until then an investment in a concern
-  controlled by a founder, trustee or substantial contributor will *not* be
-  refused. This is the largest remaining gap in the module.
+- **The section 13(3) check depends on the flag being set, and matches the issuer
+  by name.** The rule is live, but it can only refuse a person the trustees have
+  marked on their Trust Donor record; nothing derives interested-person status, and
+  a substantial contributor crossing the threshold is not detected from the
+  donation ledger. The `counterparty` link is matched reliably; the free-text
+  `issuer` is matched on the donor's name, case- and space-insensitively, so a
+  spelling variant escapes it. Concerns the Trust has never received a donation
+  from need a Trust Donor record created for them before they can be flagged.
 - **No Rule 17C clauses ship.** An earlier version seeded a plausible `17C(i)`–`17C(v)`
   table; an independent audit established it was materially wrong (the current rule
   has Public Account of India at (ii), the housing-authority deposit at (iii), and

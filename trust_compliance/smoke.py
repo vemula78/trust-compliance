@@ -27,6 +27,11 @@ from trust_compliance.setup.accounting_dimension import (
 COMPANY = "Sai Trust Smoke"
 ABBR = "STS"
 
+#: A concern controlled by a trustee: a section 13(3) interested person. Named
+#: distinctly so that no other fixture's issuer collides with it - the check
+#: matches issuer text, and a collision would refuse an unrelated holding.
+INTERESTED_CONCERN = "Trustee Enterprises Pvt Ltd"
+
 _results: list[tuple[bool, str]] = []
 
 
@@ -479,6 +484,31 @@ def _invest_txn(**kwargs):
     return doc.reload()
 
 
+def _interested_person_donor() -> str:
+    """The donor record standing for a trustee-controlled concern."""
+    existing = frappe.db.get_value("Trust Donor",
+                                   {"donor_name": INTERESTED_CONCERN,
+                                    "company": COMPANY})
+    if existing:
+        return existing
+    doc = frappe.get_doc({
+        "doctype": "Trust Donor", "company": COMPANY,
+        "donor_name": INTERESTED_CONCERN, "donor_type": "Company",
+    })
+    doc.flags.ignore_permissions = True
+    doc.insert()
+    return doc.name
+
+
+def _flag_anonymous_donor_as_interested():
+    donor = frappe.get_doc("Trust Donor", {"donor_name": "Hundi Collection",
+                                           "company": COMPANY})
+    donor.is_interested_person = 1
+    donor.interested_person_basis = "Substantial Contributor"
+    donor.flags.ignore_permissions = True
+    donor.save()
+
+
 def _check_investments() -> None:
     """Section 11(5) investment of corpus.
 
@@ -638,14 +668,76 @@ def _check_investments() -> None:
                             gross_amount=999_999, tds=0),
     )
 
+    print("\n--- section 13(3) interested persons ---")
+    from trust_compliance.trust_compliance.doctype.trust_investment.trust_investment import (
+        get_prohibited_parties,
+    )
+
+    concern = _interested_person_donor()
+    # Cleared first, and re-set below. The flag lives on a donor record, which
+    # _reset() deliberately keeps, so leaving it set would make the "bought while
+    # the issuer was still an ordinary concern" purchase below fail on the second
+    # run - and it is the transition from unflagged to flagged that is under test.
+    frappe.db.set_value("Trust Donor", concern, "is_interested_person", 0)
+    frappe.db.commit()
+    _check(get_prohibited_parties(COMPANY) == [],
+           "no interested persons are on record to begin with")
+
+    pre = _invest(investment_name="Deposit With A Future Trustee", fund="GEN",
+                  mode="11(5)(iii)", instrument_type="Bank Fixed Deposit",
+                  issuer=INTERESTED_CONCERN, cost=3_000)
+    _check(pre.docstatus == 1,
+           "a deposit with a concern nobody has flagged is allowed")
+
+    donor = frappe.get_doc("Trust Donor", concern)
+    donor.is_interested_person = 1
+    donor.interested_person_basis = "Concern with Substantial Interest"
+    donor.flags.ignore_permissions = True
+    donor.save()
+    frappe.db.commit()
+    _check(set(get_prohibited_parties(COMPANY)) == {concern, INTERESTED_CONCERN},
+           "the flagged donor is returned by both its id and its name")
+
+    _expect_refusal(
+        "an investment naming an interested person as counterparty",
+        lambda: _invest(investment_name="Interested Counterparty", fund="GEN",
+                        mode="11(5)(iii)", instrument_type="Bank Fixed Deposit",
+                        issuer="State Bank of India", counterparty=concern,
+                        cost=5_000),
+    )
+    _expect_refusal(
+        "an investment issued by an interested person, typed in lower case",
+        lambda: _invest(investment_name="Interested Issuer", fund="GEN",
+                        mode="11(5)(iii)", instrument_type="Bank Fixed Deposit",
+                        issuer=INTERESTED_CONCERN.lower(), cost=5_000),
+    )
+    _expect_refusal(
+        "marking an anonymous collection an interested person",
+        lambda: _flag_anonymous_donor_as_interested(),
+    )
+
     print("\n--- investment register ---")
     from trust_compliance.core.investment import build_investment_register
 
+    funds_master = frappe.get_all("Fund", filters={"company": COMPANY},
+                                  fields=["name", "fund_name", "fund_class",
+                                          "is_default", "is_fcra"])
+    # Built twice on purpose. The first run holds the 11(5) assertions below to
+    # the mode rules alone; the second proves that flagging a person taints an
+    # instrument that was compliant when it was bought - which is the only way
+    # this breach can appear, since becoming a trustee posts no transaction.
+    tainted = build_investment_register(
+        queries_investments(), queries_investment_transactions(), funds_master,
+        prohibited_parties=get_prohibited_parties(COMPANY),
+    )
+    tainted_row = {row["investment"]: row for row in tainted["rows"]}[pre.name]
+    _check(not tainted_row["is_compliant"],
+           "the register re-checks 13(3) and taints a holding bought before the flag")
+    _check(any("13(2)(h)" in violation for violation in tainted_row["violations"]),
+           "the violation names section 13(2)(h)")
+
     register = build_investment_register(
-        queries_investments(), queries_investment_transactions(),
-        frappe.get_all("Fund", filters={"company": COMPANY},
-                       fields=["name", "fund_name", "fund_class", "is_default",
-                               "is_fcra"]),
+        queries_investments(), queries_investment_transactions(), funds_master,
     )
     by_id = {row["investment"]: row for row in register["rows"]}
     _check(flt(by_id[fd.name]["book_value"]) == 300_000,

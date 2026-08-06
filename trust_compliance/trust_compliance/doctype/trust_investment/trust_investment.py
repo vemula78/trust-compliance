@@ -292,19 +292,37 @@ class TrustInvestment(Document):
 
 
 def get_prohibited_parties(company: str) -> list[str]:
-    """Persons the Trust may not invest with under sections 13(2)(h) and 13(3).
+    """Identifiers of persons the Trust may not invest with, under 13(2)(h)/13(3).
 
-    **This check is currently inert and returns an empty list.** It is wired
-    through to `validate_investment_mode` so the rule is exercised end to end, but
-    it can never fire, because Trust Donor has no field that marks a donor as an
-    interested person under section 13(3).
+    Read from the `is_interested_person` flag on Trust Donor - authors and
+    founders, trustees and managers, substantial contributors, their relatives,
+    and concerns in which any of them has a substantial interest. Trust Donor
+    carries the flag because it is already the Trust's register of the persons it
+    deals with; a separate master would have to be kept in step with it.
 
-    TODO: add an `is_prohibited_person` check field to Trust Donor - author,
-    trustee, manager, substantial contributor, their relatives, and any concern in
-    which they have a substantial interest - and return those donor names here.
-    Trust Donor is outside this change's scope, so the field is not being added
-    now; until it exists, investing in a prohibited concern will pass validation
-    silently and must be caught by the trustees, not by this app. Do not read this
-    function's presence as evidence that the 13(3) check is live.
+    Two identifiers are returned per person: the record id, which is what the
+    `counterparty` link stores, and the donor name, which is what someone types
+    into the free-text `issuer`. The name match is what catches the commoner
+    breach - a trustee's own company named as the issuer of the instrument - and
+    it is a text match, so a spelling variant escapes it. That is a known limit,
+    not a safe default: the link field is the reliable half.
+
+    Disabled donors are included. Disabling stops a record being used for new
+    donations; it does not stop the person being an interested person.
+
+    A donor with no company is treated as belonging to every company, because a
+    trustee of the Trust is a trustee whichever company the posting sits under.
     """
-    return []
+    donors = frappe.get_all(
+        "Trust Donor",
+        filters={"is_interested_person": 1},
+        fields=["name", "donor_name", "company"],
+    )
+    identifiers: list[str] = []
+    for donor in donors:
+        if donor.company and company and donor.company != company:
+            continue
+        identifiers.append(donor.name)
+        if donor.donor_name:
+            identifiers.append(donor.donor_name)
+    return identifiers
