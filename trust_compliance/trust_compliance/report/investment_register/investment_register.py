@@ -34,11 +34,19 @@ def execute(filters: dict | None = None):
     company = filters["company"]
     as_on = filters.get("as_on")
 
+    # `frappe.get_all` does not apply permissions, so a user restricted to one
+    # company could otherwise read another's investments by typing its name into
+    # the filter. The company is checked explicitly before any read happens.
+    if not frappe.has_permission("Trust Investment", "report"):
+        frappe.throw(_("Not permitted to read investments."), frappe.PermissionError)
+    frappe.get_doc("Company", company).check_permission("read")
+
     report = build_investment_register(
         queries.investments(company),
         queries.investment_transactions(company),
         queries.funds(company),
         as_on=as_on,
+        modes=queries.investment_modes(),
     )
 
     rows = report["rows"]
@@ -83,10 +91,13 @@ def execute(filters: dict | None = None):
 
     # (columns, data, message, chart) - the chart must not land in the
     # report_summary slot, which the desk iterates as a list.
-    return _columns(), data, _message(report, rows, company), _chart(report)
+    # Totals, warnings and chart are computed from the *visible* rows. Leaving
+    # them company-wide made the narrative contradict the schedule beneath it
+    # whenever a fund or compliance filter was applied.
+    return _columns(), data, _message(rows, company), _chart(rows)
 
 
-def _message(report: dict, rows: list[dict], company: str) -> str:
+def _message(rows: list[dict], company: str) -> str:
     if not rows:
         return _("No submitted investments for this company yet.")
 
@@ -95,15 +106,18 @@ def _message(report: dict, rows: list[dict], company: str) -> str:
     def money(value):
         return fmt_money(value, currency=currency)
 
-    totals = report["totals"]
     lines = [
         _("{0} instruments, book value {1}, income {2} (TDS {3}).").format(
-            len(rows), money(totals["book_value"]), money(totals["income_earned"]),
-            money(totals["tds"]),
+            len(rows),
+            money(sum(flt(row["book_value"]) for row in rows)),
+            money(sum(flt(row["income_earned"]) for row in rows)),
+            money(sum(flt(row["tds"]) for row in rows)),
         )
     ]
 
-    non_compliant = flt(totals["non_compliant_book_value"])
+    non_compliant = sum(
+        flt(row["book_value"]) for row in rows if not row["is_compliant"]
+    )
     if non_compliant:
         lines.append(
             "<b style='color:var(--red-600)'>"
@@ -141,10 +155,13 @@ def _message(report: dict, rows: list[dict], company: str) -> str:
     return "<br>".join(lines)
 
 
-def _chart(report: dict) -> dict:
-    by_mode = report["by_mode"]
-    labels = [by_mode[clause]["mode_label"] or clause for clause in sorted(by_mode)]
-    values = [by_mode[clause]["book_value"] for clause in sorted(by_mode)]
+def _chart(rows: list[dict]) -> dict:
+    by_mode: dict[str, float] = {}
+    for row in rows:
+        key = row["mode_label"] or row["mode_clause"] or _("Unmapped")
+        by_mode[key] = by_mode.get(key, 0.0) + flt(row["book_value"])
+    labels = sorted(by_mode)
+    values = [by_mode[label] for label in labels]
     return {
         "data": {"labels": labels,
                  "datasets": [{"name": _("Book Value"), "values": values}]},

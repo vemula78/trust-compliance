@@ -121,6 +121,32 @@ def form_10_accumulations(company: str, financial_year: str | None = None) -> li
     )
 
 
+def investment_modes() -> dict[str, dict]:
+    """The live permitted-mode master, keyed by clause.
+
+    This is the authority for what section 11(5) permits, not the seed table in
+    `core/investment.py`. Reading it here is what lets the Trust's auditor add a
+    Rule 17C clause against the notified text, or withdraw one, without an app
+    release - and what makes a mode disabled after purchase stop reporting as
+    permitted on the register.
+    """
+    return {
+        mode.clause: {
+            "clause": mode.clause,
+            "label": mode.label,
+            "is_speculative": bool(mode.is_speculative),
+            "allows_equity": bool(mode.allows_equity),
+            "disabled": bool(mode.disabled),
+            "citation_verified": bool(mode.citation_verified),
+        }
+        for mode in frappe.get_all(
+            "Investment Mode",
+            fields=["clause", "label", "is_speculative", "allows_equity", "disabled",
+                    "citation_verified"],
+        )
+    }
+
+
 def investments(company: str) -> list[dict]:
     """Submitted investments with the fund attributes the 11(5) check needs."""
     rows = frappe.get_all(

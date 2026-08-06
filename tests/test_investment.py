@@ -59,9 +59,37 @@ class TestMasters:
 
     def test_is_permitted_mode(self):
         assert is_permitted_mode("11(5)(iii)")
-        assert is_permitted_mode("17C(i)")
-        # Not in either master, e.g. an off-market unlisted debenture.
+        # Not in the master, e.g. an off-market unlisted debenture.
         assert not is_permitted_mode("private placement debenture")
+
+    def test_rule_17c_ships_empty_on_purpose(self):
+        # An earlier version shipped a plausible but materially wrong 17C table.
+        # Shipping nothing is the correct behaviour: the Trust's auditor adds the
+        # notified clauses to the Investment Mode master. If someone re-populates
+        # this table from memory, this test fails and asks them to prove it.
+        assert RULE_17C_MODES == {}
+
+    def test_the_live_master_authorises_a_clause_the_seed_table_lacks(self):
+        # This is the whole point of the master being editable: a clause the
+        # auditor adds must take effect without an app release.
+        master = {
+            **PERMITTED_MODES,
+            "17C(ii)": {"clause": "17C(ii)", "label": "Public Account of India",
+                        "is_speculative": False, "allows_equity": False},
+        }
+        assert not is_permitted_mode("17C(ii)")
+        assert is_permitted_mode("17C(ii)", master)
+        assert validate_investment_mode(
+            investment(mode_clause="17C(ii)"), CORPUS_FUND, modes=master
+        ) == []
+
+    def test_a_withdrawn_mode_is_refused_even_though_it_exists(self):
+        master = {**PERMITTED_MODES}
+        master["11(5)(iv)"] = {**master["11(5)(iv)"], "disabled": True}
+        errors = validate_investment_mode(
+            investment(mode_clause="11(5)(iv)"), CORPUS_FUND, modes=master
+        )
+        assert any("withdrawn" in error for error in errors)
 
     def test_every_mode_carries_the_required_shape(self):
         for clause, mode in PERMITTED_MODES.items():
@@ -74,6 +102,15 @@ class TestMasters:
         # Section 11(5) permits equity only in a public sector company.
         equity_clauses = {c for c, m in PERMITTED_MODES.items() if m["allows_equity"]}
         assert equity_clauses == {"11(5)(vii)"}
+
+    def test_equity_under_a_clause_that_does_not_permit_it_is_refused(self):
+        # Inspecting the metadata is not enough: the validator must act on it.
+        # Labelling PSU equity as a bank deposit must not slip through.
+        errors = validate_investment_mode(
+            investment(mode_clause="11(5)(iii)", is_equity=1, issuer_is_psu=1),
+            CORPUS_FUND,
+        )
+        assert any("does not permit equity" in error for error in errors)
 
 
 # --------------------------------------------------------------------------
@@ -171,7 +208,12 @@ class TestValidateInvestmentMode:
             ),
             FCRA_FUND,
         )
-        assert len(errors) >= 2
+        # Assert each breach by name. `len(errors) >= 2` would still pass with
+        # any one of the three rules deleted, which is exactly the regression
+        # this test exists to catch.
+        assert any("public sector" in error for error in errors)
+        assert any("foreign contribution" in error for error in errors)
+        assert any("greater than zero" in error for error in errors)
 
 
 # --------------------------------------------------------------------------
@@ -217,6 +259,18 @@ class TestSplitInterestReceipt:
     def test_splits_gross_into_tds_and_net(self):
         result = split_interest_receipt(10_000, 1_000)
         assert result == {"gross": 10_000.0, "tds": 1_000.0, "net": 9_000.0}
+
+    def test_the_split_always_conserves(self):
+        # net + tds must equal gross to the paisa, or the journal entry the
+        # controller builds from these three figures will not balance and
+        # ERPNext will reject the receipt. Rounding each part independently
+        # breaks this: 1.004 / 0.005 rounds to 1.00 / 0.01 / 1.00.
+        for gross, tds in [(1.004, 0.005), (10_000, 1_000), (0.01, 0.01),
+                           (33.335, 3.335), (999_999.995, 99_999.995)]:
+            result = split_interest_receipt(gross, tds)
+            assert round(result["net"] + result["tds"], 2) == result["gross"], (
+                f"split did not conserve for gross={gross}, tds={tds}: {result}"
+            )
 
     def test_tds_is_not_netted_out_of_the_gross_figure(self):
         # TDS is a recoverable asset, not application of income, so "gross"

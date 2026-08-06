@@ -34,6 +34,7 @@ from frappe.model.document import Document
 from frappe.utils import flt, getdate
 
 from trust_compliance.core.investment import validate_investment_mode
+from trust_compliance.queries import investment_modes
 from trust_compliance.trust_compliance.doctype.trust_compliance_settings.trust_compliance_settings import (
     get_company_accounts,
 )
@@ -61,6 +62,30 @@ class TrustInvestment(Document):
         self.db_set("status", "Active", update_modified=False)
         journal_entry = self._post_journal_entry()
         self.db_set("journal_entry", journal_entry, update_modified=False)
+
+    def before_cancel(self):
+        """Refuse to cancel while submitted transactions still reference this.
+
+        Cancelling only the purchase entry left interest receipts and redemptions
+        and their journal entries live in the ledger, so an amendment could repost
+        the full cost while an old redemption still stood - the book value and the
+        GL would then disagree permanently. The transactions have to be cancelled
+        first, deliberately and in order.
+        """
+        live = frappe.get_all(
+            "Investment Transaction",
+            filters={"investment": self.name, "docstatus": 1},
+            pluck="name",
+        )
+        if live:
+            frappe.throw(
+                _(
+                    "Cancel the transactions on this investment first: {0}. "
+                    "Cancelling the investment alone would leave their journal "
+                    "entries in the ledger against a holding that no longer exists."
+                ).format(", ".join(live)),
+                title=_("Transactions Exist"),
+            )
 
     def on_cancel(self):
         self.flags.ignore_links = True
@@ -186,6 +211,7 @@ class TrustInvestment(Document):
                 "is_fcra": bool(fund.is_fcra),
             },
             get_prohibited_parties(self.company),
+            modes=investment_modes(),
         )
         if errors:
             frappe.throw(

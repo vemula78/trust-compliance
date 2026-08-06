@@ -32,7 +32,7 @@ from __future__ import annotations
 import frappe
 from frappe import _
 from frappe.model.document import Document
-from frappe.utils import flt, fmt_money
+from frappe.utils import flt, getdate, fmt_money
 
 from trust_compliance.core.investment import (
     classify_investment_income,
@@ -50,6 +50,7 @@ class InvestmentTransaction(Document):
         self._sync_investment_fields()
         self._validate_investment_is_submitted()
         self._validate_amounts()
+        self._validate_transaction_date()
         self._validate_redemption_within_book_value()
 
     def on_submit(self):
@@ -130,33 +131,66 @@ class InvestmentTransaction(Document):
         self.tds = flt(split["tds"])
         self.net_amount = flt(split["net"])
 
+    def _validate_transaction_date(self):
+        """A transaction cannot predate the instrument it belongs to.
+
+        Interest credited before the deposit was made, or a maturity dated before
+        purchase, both corrupt an as-on register: the reconstruction as at any date
+        between the two shows income or a redemption against a holding that did not
+        yet exist.
+        """
+        purchase_date = frappe.db.get_value(
+            "Trust Investment", self.investment, "purchase_date"
+        )
+        if purchase_date and getdate(self.transaction_date) < getdate(purchase_date):
+            frappe.throw(
+                _(
+                    "Transaction date {0} is before the investment was purchased on {1}."
+                ).format(
+                    frappe.format_value(self.transaction_date, {"fieldtype": "Date"}),
+                    frappe.format_value(purchase_date, {"fieldtype": "Date"}),
+                )
+            )
+
     def _validate_redemption_within_book_value(self):
         """A redemption cannot return more capital than the instrument carries.
 
         Guarded on the gross, because that is the capital coming back. Interest and
-        dividend are not limited by book value - an instrument can pay out more
-        income over its life than it cost.
+        dividend are income and do not touch capital, so they are not checked here.
+
+        The parent row is locked for the remainder of the transaction. Without the
+        lock two clerks redeeming at the same moment both validated against the
+        same opening book value, both posted, and the second decrement overwrote
+        the first - the instrument then showed one redemption's worth of capital
+        still on hand while the bank had received two.
+
+        No tolerance is allowed on the excess. An earlier version permitted
+        `remaining + 0.01`, which let a redemption of 100.01 through against a
+        remaining 100.00 and clamped the negative residual to zero, quietly losing
+        a paisa of capital.
         """
         if self._classification() != "asset":
             return
 
-        investment = self._investment()
-        remaining = flt(investment.book_value)
-        if flt(self.gross_amount) > remaining + 0.01:
+        remaining = flt(
+            frappe.db.get_value(
+                "Trust Investment", self.investment, "book_value", for_update=True
+            )
+        )
+        if flt(self.gross_amount) > remaining:
             frappe.throw(
                 _(
                     "Investment {0} carries a book value of {1}; a {2} of {3} would "
-                    "return more capital than the Trust holds in it."
+                    "return more capital than the instrument holds."
                 ).format(
-                    investment.name,
-                    fmt_money(remaining, currency=self._currency()),
+                    self.investment,
+                    frappe.format_value(remaining, {"fieldtype": "Currency"}),
                     _(self.kind),
-                    fmt_money(self.gross_amount, currency=self._currency()),
+                    frappe.format_value(flt(self.gross_amount), {"fieldtype": "Currency"}),
                 ),
-                title=_("Book Value"),
+                title=_("Redemption Exceeds Book Value"),
             )
 
-    # -- GL posting ---------------------------------------------------------
 
     def _post_journal_entry(self) -> str:
         classification = self._classification()

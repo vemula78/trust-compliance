@@ -114,53 +114,19 @@ SECTION_11_5_MODES: dict[str, dict] = {
     },
 }
 
-#: Additional modes prescribed under section 11(5)(xii) by Rule 17C.
+#: Rule 17C prescribes further modes under section 11(5)(xii). **Deliberately
+#: empty.** An earlier version shipped a plausible-looking 17C(i)-(v) table; an
+#: independent audit established it was materially wrong - the current rule has
+#: Public Account of India at (ii), the housing-authority deposit at (iii), and
+#: runs to (x). A compliance app that prints a wrong statutory citation on an
+#: audit schedule is worse than one that prints none, because the reader takes it
+#: at face value and an assessing officer may not.
 #:
-#: **These sub-clause numbers are NOT verified against the current notified text
-#: of Rule 17C**, which has been amended repeatedly since 1973. They therefore
-#: carry `verified: False`, and the Investment Register warns when book value
-#: sits under an unverified clause. That matters: a wrong statutory citation on
-#: an audit schedule or a Form 10B annexure is worse than no citation, because a
-#: reader takes it at face value. The Trust's auditor should confirm each clause
-#: against the notified rule and correct the Investment Mode master, which exists
-#: to be edited for exactly this reason.
-RULE_17C_MODES: dict[str, dict] = {
-    "17C(i)": {
-        "clause": "17C(i)",
-        "verified": False,
-        "label": "Units of a mutual fund scheme referred to in section 10(23D)",
-        "is_speculative": True,
-        "allows_equity": False,
-    },
-    "17C(ii)": {
-        "clause": "17C(ii)",
-        "verified": False,
-        "label": "Deposit with an authority constituted for housing accommodation, or for planning, development or improvement of cities, towns or villages",
-        "is_speculative": False,
-        "allows_equity": False,
-    },
-    "17C(iii)": {
-        "clause": "17C(iii)",
-        "verified": False,
-        "label": "Deposit with, or investment in bonds of, a public financial institution",
-        "is_speculative": False,
-        "allows_equity": False,
-    },
-    "17C(iv)": {
-        "clause": "17C(iv)",
-        "verified": False,
-        "label": "Investment in immovable property held wholly for charitable purposes, including a religious purpose",
-        "is_speculative": False,
-        "allows_equity": False,
-    },
-    "17C(v)": {
-        "clause": "17C(v)",
-        "verified": False,
-        "label": "Deposit made by an employer-trust with LIC under an approved gratuity or superannuation fund",
-        "is_speculative": False,
-        "allows_equity": False,
-    },
-}
+#: Rule 17C modes are therefore added by the Trust's own auditor in the
+#: Investment Mode master, against the notified text, and are authorised from
+#: there - see `permitted_modes()`. Nothing is lost: the master is the authority,
+#: so an addition takes effect without an app release.
+RULE_17C_MODES: dict[str, dict] = {}
 
 #: Merged view of every permitted mode, keyed by clause. This is what
 #: `is_permitted_mode` and `validate_investment_mode` test against.
@@ -196,13 +162,23 @@ def _as_date(value: object) -> datetime.date | None:
     return None
 
 
-def is_permitted_mode(clause: str) -> bool:
-    """True if `clause` is a section 11(5) or Rule 17C mode of investment."""
-    return clause in PERMITTED_MODES
+def is_permitted_mode(clause: str, modes: Mapping[str, Mapping] | None = None) -> bool:
+    """True if `clause` is a permitted mode of investment.
+
+    `modes` is the live master when the caller has one. Falling back to
+    `PERMITTED_MODES` keeps the pure tests independent of a database, but a
+    caller inside the app must pass the master: it is the authority, and only it
+    knows which clauses the Trust's auditor has added under Rule 17C and which
+    have since been withdrawn.
+    """
+    return str(clause) in (modes if modes is not None else PERMITTED_MODES)
 
 
 def validate_investment_mode(
-    investment: Mapping, fund: Mapping, prohibited_parties: Iterable[str] = ()
+    investment: Mapping,
+    fund: Mapping,
+    prohibited_parties: Iterable[str] = (),
+    modes: Mapping[str, Mapping] | None = None,
 ) -> list[str]:
     """Return human-readable refusal reasons for a proposed or existing investment.
 
@@ -216,9 +192,20 @@ def validate_investment_mode(
     fund: {"name", "fund_class", "is_fcra"}
     """
     errors: list[str] = []
+    # A generator would be consumed by the first membership test, silently
+    # letting every later prohibited counterparty through.
+    prohibited = frozenset(prohibited_parties)
 
+    master = modes if modes is not None else PERMITTED_MODES
     clause = investment.get("mode_clause")
-    mode = PERMITTED_MODES.get(str(clause))
+    mode = master.get(str(clause))
+    if mode is not None and mode.get("disabled"):
+        errors.append(
+            f'Mode "{clause}" has been withdrawn and is no longer a permitted '
+            "form of investment; income from it is specified income taxed at the "
+            "maximum marginal rate under section 115BBI."
+        )
+        mode = None
     if mode is None:
         errors.append(
             f'"{clause}" is not a mode permitted under section 11(5) or Rule 17C; '
@@ -245,15 +232,26 @@ def validate_investment_mode(
             f"speculative activity, and {reason}."
         )
 
-    if bool(investment.get("is_equity")) and not bool(investment.get("issuer_is_psu")):
-        errors.append(
-            "Equity shares are a permitted investment only in a public sector "
-            f"company under section 11(5)(vii); issuer {investment.get('issuer')} "
-            "is not a public sector company."
-        )
+    # Whether equity is permissible is a property of the mode, not a blanket
+    # rule: 11(5)(vii) admits shares of a public sector company, and Rule 17C
+    # carries narrow non-PSU equity modes (a depository, an incubatee, NSDC).
+    # Keying on the mode means an auditor adding such a clause to the master can
+    # authorise it, instead of the app refusing a lawful holding.
+    if bool(investment.get("is_equity")) and mode is not None:
+        if not bool(mode.get("allows_equity")):
+            errors.append(
+                f"Mode {clause} ({mode.get('label')}) does not permit equity "
+                "shares. Equity is permissible only where the mode itself allows "
+                "it - section 11(5)(vii) for a public sector company."
+            )
+        elif str(clause) == "11(5)(vii)" and not bool(investment.get("issuer_is_psu")):
+            errors.append(
+                "Section 11(5)(vii) permits equity only in a public sector "
+                f"company; issuer {investment.get('issuer')} is not one."
+            )
 
     counterparty = investment.get("counterparty")
-    if counterparty is not None and counterparty in prohibited_parties:
+    if counterparty is not None and counterparty in prohibited:
         errors.append(
             f"Counterparty {counterparty} is a person of substantial interest "
             "under section 13(2)(h)/13(3) (a founder, trustee, substantial "
@@ -303,10 +301,16 @@ def split_interest_receipt(gross: float, tds: float) -> dict:
         raise ValueError("Gross interest and TDS cannot be negative.")
     if tds_amount > gross_amount:
         raise ValueError("TDS cannot exceed the gross interest it was deducted from.")
+    # Net is derived from the *rounded* parts, not rounded independently.
+    # Rounding all three separately does not conserve: gross=1.004, tds=0.005
+    # rounds to 1.00 / 0.01 / 1.00, so debits exceed the credit by a paisa and
+    # ERPNext rejects the journal entry.
+    gross_rounded = round_money(gross_amount)
+    tds_rounded = round_money(tds_amount)
     return {
-        "gross": round_money(gross_amount),
-        "tds": round_money(tds_amount),
-        "net": round_money(gross_amount - tds_amount),
+        "gross": gross_rounded,
+        "tds": tds_rounded,
+        "net": round_money(gross_rounded - tds_rounded),
     }
 
 
@@ -333,6 +337,7 @@ def build_investment_register(
     funds: Sequence[FundRow],
     as_on: object = None,
     prohibited_parties: Iterable[str] = (),
+    modes: Mapping[str, Mapping] | None = None,
 ) -> dict:
     """Investment register carried at cost, with compliance re-checked per row.
 
@@ -378,6 +383,13 @@ def build_investment_register(
     }
 
     for investment in investments:
+        # An instrument bought after the cut-off did not exist on that date. Only
+        # transactions were being clipped, so a 2027 purchase appeared at full
+        # cost in a register drawn up as at 31 March 2026.
+        purchased_on = _as_date(investment.get("purchase_date"))
+        if window_to and purchased_on and purchased_on > window_to:
+            continue
+
         investment_id = investment.get("investment") or investment.get("name")
         # The investment record carries its own cost - a Trust Investment is
         # submitted with the amount it was bought for and posts its own funding
@@ -402,14 +414,34 @@ def build_investment_register(
                     redeemed = round_money(redeemed + amount)
 
         book_value = round_money(cost - redeemed)
+        # Redemptions exceeding cost cannot produce a negative holding: it would
+        # understate total book value and hide the excess. The overdraw is
+        # surfaced as a violation instead, which is what an auditor needs to see.
+        overdrawn = round_money(-book_value) if book_value < 0 else 0.0
+        if overdrawn:
+            book_value = 0.0
 
         fund_name = investment.get("fund")
         fund = fund_meta.get(fund_name, {})
-        violations = validate_investment_mode(investment, fund, prohibited_parties)
+        violations = validate_investment_mode(
+            investment, fund, prohibited_parties, modes=modes
+        )
+        if overdrawn:
+            violations = violations + [
+                f"Redemptions exceed cost by {overdrawn:.2f}; the register cannot "
+                "show a negative holding, so the excess is reported here."
+            ]
         is_compliant = not violations
 
         clause = investment.get("mode_clause")
-        mode_label = PERMITTED_MODES.get(str(clause), {}).get("label")
+        # Prefer the master's label, and the record's own, over the seed table:
+        # an auditor correcting a statutory description must see the correction
+        # on the schedule.
+        master_for_label = modes if modes is not None else PERMITTED_MODES
+        mode_label = (
+            investment.get("mode_label")
+            or master_for_label.get(str(clause), {}).get("label")
+        )
 
         rows.append(
             {
