@@ -1,0 +1,319 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "naming_series:",
+ "creation": "2026-08-06 00:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "is_submittable": 1,
+ "field_order": [
+  "naming_series",
+  "investment_name",
+  "company",
+  "column_break_head",
+  "status",
+  "purchase_date",
+  "maturity_date",
+  "section_fund",
+  "fund",
+  "fund_class",
+  "column_break_fund",
+  "is_fcra",
+  "is_corpus",
+  "section_mode",
+  "mode",
+  "instrument_type",
+  "column_break_mode",
+  "issuer",
+  "issuer_is_psu",
+  "counterparty",
+  "section_terms",
+  "cost",
+  "interest_rate",
+  "folio_no",
+  "column_break_terms",
+  "payout_type",
+  "book_value",
+  "section_gl",
+  "investment_account",
+  "column_break_gl",
+  "journal_entry",
+  "amended_from"
+ ],
+ "fields": [
+  {
+   "default": "INV-.YYYY.-",
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Series",
+   "options": "INV-.YYYY.-",
+   "reqd": 1
+  },
+  {
+   "fieldname": "investment_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Investment Name",
+   "reqd": 1,
+   "description": "How the instrument is identified on the Trust's records, e.g. \"SBI FD 5yr - Hospital Fund\"."
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "in_standard_filter": 1,
+   "label": "Company",
+   "options": "Company",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_head",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "Active",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Status",
+   "options": "Active\nMatured\nRedeemed\nDisposed",
+   "read_only": 1,
+   "no_copy": 1,
+   "description": "Derived from the instrument's transactions, never set by hand."
+  },
+  {
+   "fieldname": "purchase_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Purchase Date",
+   "reqd": 1
+  },
+  {
+   "fieldname": "maturity_date",
+   "fieldtype": "Date",
+   "label": "Maturity Date"
+  },
+  {
+   "fieldname": "section_fund",
+   "fieldtype": "Section Break",
+   "label": "Funding Fund"
+  },
+  {
+   "fieldname": "fund",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Fund",
+   "options": "Fund",
+   "reqd": 1,
+   "description": "The one fund whose money bought this instrument. Deliberately single-valued: an FD bought from a pool holding mixed FCRA and domestic money, or mixed corpus and unrestricted money, cannot be reported in FC-4 and cannot be shown as separately identifiable corpus at audit. Buy one instrument per fund instead of co-funding one."
+  },
+  {
+   "fetch_from": "fund.fund_class",
+   "fieldname": "fund_class",
+   "fieldtype": "Data",
+   "label": "Fund Class",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_fund",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "fetch_from": "fund.is_fcra",
+   "fieldname": "is_fcra",
+   "fieldtype": "Check",
+   "label": "FCRA Fund",
+   "read_only": 1,
+   "description": "Set from the fund. An FCRA investment is bought from and redeemed into the FCRA-designated bank account, and its income is itself foreign contribution."
+  },
+  {
+   "default": "0",
+   "fieldname": "is_corpus",
+   "fieldtype": "Check",
+   "label": "Corpus Investment",
+   "description": "Corpus keeps its section 11(1)(d) exemption only while it is held in an 11(5) mode and remains separately identifiable. Set automatically from a Corpus-class fund."
+  },
+  {
+   "fieldname": "section_mode",
+   "fieldtype": "Section Break",
+   "label": "Permitted Mode"
+  },
+  {
+   "fieldname": "mode",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Mode",
+   "options": "Investment Mode",
+   "reqd": 1,
+   "description": "The section 11(5) / Rule 17C clause this investment is made under. An investment outside these modes makes its income taxable at 30% under section 115BBI."
+  },
+  {
+   "fieldname": "instrument_type",
+   "fieldtype": "Select",
+   "in_standard_filter": 1,
+   "label": "Instrument Type",
+   "options": "Bank Fixed Deposit\nGovernment Security\nPost Office Scheme\nPSU Bond\nDebenture\nMutual Fund Units\nEquity Shares\nImmovable Property\nOther",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_mode",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "issuer",
+   "fieldtype": "Data",
+   "label": "Issuer",
+   "description": "Bank, government, corporate or fund house the instrument is issued by."
+  },
+  {
+   "default": "0",
+   "fieldname": "issuer_is_psu",
+   "fieldtype": "Check",
+   "label": "Issuer is a PSU",
+   "description": "Several 11(5) clauses admit an instrument only when the issuer is a public sector company or a government undertaking."
+  },
+  {
+   "fieldname": "counterparty",
+   "fieldtype": "Link",
+   "label": "Counterparty",
+   "options": "Trust Donor",
+   "description": "Only where the investment is made with, or through, a person the Trust deals with. Used for the section 13(3) prohibited-person check: trust funds invested in a concern in which an interested person has a substantial interest breach section 13(2)(h)."
+  },
+  {
+   "fieldname": "section_terms",
+   "fieldtype": "Section Break",
+   "label": "Terms"
+  },
+  {
+   "fieldname": "cost",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Cost",
+   "options": "Company:company:default_currency",
+   "reqd": 1
+  },
+  {
+   "fieldname": "interest_rate",
+   "fieldtype": "Percent",
+   "label": "Interest Rate"
+  },
+  {
+   "fieldname": "folio_no",
+   "fieldtype": "Data",
+   "label": "Folio / Certificate No",
+   "description": "FD receipt, folio or certificate number - the reference an auditor verifies the holding against."
+  },
+  {
+   "fieldname": "column_break_terms",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "Cumulative",
+   "fieldname": "payout_type",
+   "fieldtype": "Select",
+   "label": "Payout Type",
+   "options": "Cumulative\nPeriodic\nNone"
+  },
+  {
+   "fieldname": "book_value",
+   "fieldtype": "Currency",
+   "label": "Book Value",
+   "options": "Company:company:default_currency",
+   "read_only": 1,
+   "no_copy": 1,
+   "description": "Cost less redemptions posted so far. Reduced by every Investment Transaction of kind Redemption or Maturity."
+  },
+  {
+   "fieldname": "section_gl",
+   "fieldtype": "Section Break",
+   "label": "Accounting"
+  },
+  {
+   "fieldname": "investment_account",
+   "fieldtype": "Link",
+   "label": "Investment Account",
+   "options": "Account",
+   "reqd": 1,
+   "description": "The balance-sheet asset account the instrument is carried in. Must be an Asset account and not a group."
+  },
+  {
+   "fieldname": "column_break_gl",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "journal_entry",
+   "fieldtype": "Link",
+   "label": "Journal Entry",
+   "options": "Journal Entry",
+   "read_only": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Trust Investment",
+   "print_hide": 1,
+   "read_only": 1
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [
+  {
+   "group": "Transactions",
+   "link_doctype": "Investment Transaction",
+   "link_fieldname": "investment"
+  }
+ ],
+ "modified": "2026-08-06 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Trust Compliance",
+ "name": "Trust Investment",
+ "naming_rule": "By \"Naming Series\" field",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "amend": 1,
+   "cancel": 1,
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Accounts Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Accounts User",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "read": 1,
+   "report": 1,
+   "export": 1,
+   "role": "Auditor"
+  }
+ ],
+ "row_format": "Dynamic",
+ "search_fields": "investment_name,folio_no",
+ "sort_field": "purchase_date",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "investment_name",
+ "track_changes": 1
+}

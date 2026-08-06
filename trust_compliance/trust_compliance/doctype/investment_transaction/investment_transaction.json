@@ -1,0 +1,224 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "naming_series:",
+ "creation": "2026-08-06 00:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "is_submittable": 1,
+ "field_order": [
+  "naming_series",
+  "investment",
+  "company",
+  "column_break_head",
+  "kind",
+  "transaction_date",
+  "section_fund",
+  "fund",
+  "column_break_fund",
+  "is_fcra",
+  "section_amounts",
+  "gross_amount",
+  "tds",
+  "column_break_amounts",
+  "net_amount",
+  "section_gl",
+  "journal_entry",
+  "column_break_gl",
+  "amended_from",
+  "section_remarks",
+  "remarks"
+ ],
+ "fields": [
+  {
+   "default": "INVT-.YYYY.-",
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Series",
+   "options": "INVT-.YYYY.-",
+   "reqd": 1
+  },
+  {
+   "fieldname": "investment",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Investment",
+   "options": "Trust Investment",
+   "reqd": 1
+  },
+  {
+   "fetch_from": "investment.company",
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "options": "Company",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_head",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "kind",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Kind",
+   "options": "Interest\nDividend\nRedemption\nMaturity",
+   "reqd": 1,
+   "description": "Interest and Dividend are income of the year and enter the 85% application test. Redemption and Maturity return capital and only reduce the holding."
+  },
+  {
+   "fieldname": "transaction_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Transaction Date",
+   "reqd": 1
+  },
+  {
+   "fieldname": "section_fund",
+   "fieldtype": "Section Break",
+   "label": "Fund"
+  },
+  {
+   "fetch_from": "investment.fund",
+   "fieldname": "fund",
+   "fieldtype": "Link",
+   "label": "Fund",
+   "options": "Fund",
+   "read_only": 1,
+   "description": "Taken from the investment. Income from an investment belongs to the fund that bought it."
+  },
+  {
+   "fieldname": "column_break_fund",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "fetch_from": "investment.is_fcra",
+   "fieldname": "is_fcra",
+   "fieldtype": "Check",
+   "label": "FCRA",
+   "read_only": 1,
+   "description": "Income derived from foreign contribution is itself foreign contribution, so it is banked back into the FCRA-designated account."
+  },
+  {
+   "fieldname": "section_amounts",
+   "fieldtype": "Section Break",
+   "label": "Amounts"
+  },
+  {
+   "fieldname": "gross_amount",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Gross Amount",
+   "options": "Company:company:default_currency",
+   "reqd": 1,
+   "description": "Before tax deducted at source. The gross is the income of the year; the TDS does not reduce it."
+  },
+  {
+   "fieldname": "tds",
+   "fieldtype": "Currency",
+   "label": "TDS",
+   "options": "Company:company:default_currency",
+   "description": "Tax deducted at source. Booked as a recoverable asset, not as application of income - a trust with 12AB registration recovers it on filing."
+  },
+  {
+   "fieldname": "column_break_amounts",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "net_amount",
+   "fieldtype": "Currency",
+   "label": "Net Amount",
+   "options": "Company:company:default_currency",
+   "read_only": 1,
+   "no_copy": 1,
+   "description": "Gross less TDS - what actually reached the bank."
+  },
+  {
+   "fieldname": "section_gl",
+   "fieldtype": "Section Break",
+   "label": "Accounting"
+  },
+  {
+   "fieldname": "journal_entry",
+   "fieldtype": "Link",
+   "label": "Journal Entry",
+   "options": "Journal Entry",
+   "read_only": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "column_break_gl",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Investment Transaction",
+   "print_hide": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_remarks",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "remarks",
+   "fieldtype": "Small Text",
+   "label": "Remarks"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-08-06 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Trust Compliance",
+ "name": "Investment Transaction",
+ "naming_rule": "By \"Naming Series\" field",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "amend": 1,
+   "cancel": 1,
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Accounts Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Accounts User",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "read": 1,
+   "report": 1,
+   "export": 1,
+   "role": "Auditor"
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "transaction_date",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

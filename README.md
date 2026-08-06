@@ -18,6 +18,29 @@ rather than a parallel ledger.
 | **Trust Donation** | Receipting with gap-free `80G/<FY>/<seq>` numbering per financial year, automatic balanced GL posting, corpus-versus-income routing, Section 269ST cash limit, and a PAN requirement above a configurable value because Form 10BD cannot be filed without one. |
 | **Fund Transfer** | Both legs post to one equity clearing account, so the trial balance is untouched and the whole movement is carried by the fund dimension. Corpus is one-way; FCRA and domestic funds cannot be bridged. |
 | **Property register** | Donated properties with survey number, municipality, extent and valuation; property-tax demands billed **through Accounts Payable**; maintenance and AMC records linked to the vendor's bill. |
+| **Investments** | Corpus and other funds invested only in the forms and modes permitted by **section 11(5)** (extended by Rule 17C), held as a maintainable master rather than hardcoded. Compliance is re-checked on the register, not just at purchase. Interest and dividend are booked as **income of the year, never corpus**. |
+
+### Why the investment module refuses rather than warns
+
+Investing outside a section 11(5) mode makes that income *specified income*, taxable
+at 30% under **section 115BBI**, with repeated breach putting the 12AB registration
+at risk under 12AB(4). Since Finance Act 2021 a corpus donation keeps its
+11(1)(d) exemption **only** while it stays in an 11(5) mode and separately
+identifiable. So the rules are enforced at posting time:
+
+- The instrument's mode must map to a permitted 11(5) / Rule 17C clause.
+- Equity shares are permitted only in a **public sector company** (11(5)(vii)).
+- An investment funded from an **FCRA** fund may not use a speculative mode —
+  FCRA s.8(1) with FCRR Rule 4 forbid using foreign contribution for speculation, so
+  bank deposits are allowed and equity is not. Income on an FCRA investment is
+  itself foreign contribution and returns to the FCRA fund.
+- **One funding fund per instrument.** A deposit bought from a pool holding mixed
+  FCRA and domestic money, or mixed corpus and unrestricted money, makes FC-4 and
+  corpus identification unprovable at audit, so co-funding is impossible by design.
+- Interest and dividend credit an **income** account, never the corpus equity
+  account — crediting corpus-FD interest back to corpus would silently remove it
+  from the 85% application test. TDS is booked as a **recoverable asset**, and
+  reinvested interest is *not* application of income.
 
 ## Design
 

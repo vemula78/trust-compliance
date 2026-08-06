@@ -21,6 +21,8 @@ REQUIRED_ROOT_TYPES = {
     "bank_account": "Asset",
     "fcra_bank_account": "Asset",
     "property_tax_expense_account": "Expense",
+    "investment_income_account": "Income",
+    "tds_receivable_account": "Asset",
 }
 
 

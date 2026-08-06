@@ -6,11 +6,18 @@ import frappe
 
 from trust_compliance.setup.accounting_dimension import create_fund_dimension
 from trust_compliance.setup.custom_fields import create_trust_custom_fields
+from trust_compliance.trust_compliance.doctype.investment_mode.investment_mode import (
+    create_default_investment_modes,
+)
 
 
 def after_install() -> None:
     create_trust_custom_fields()
     create_fund_dimension()
+    # The permitted-mode master is seeded on install, unlike the fund master:
+    # section 11(5) is statute and identical for every trust, whereas fund codes
+    # are the Trust's own choice.
+    create_default_investment_modes()
     _ensure_settings_singleton()
     frappe.db.commit()
 

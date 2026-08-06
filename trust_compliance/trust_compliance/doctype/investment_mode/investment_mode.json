@@ -1,0 +1,140 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "field:clause",
+ "creation": "2026-08-06 00:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "clause",
+  "label",
+  "statute",
+  "column_break_main",
+  "is_speculative",
+  "allows_equity",
+  "citation_verified",
+  "disabled",
+  "section_notes",
+  "notes"
+ ],
+ "fields": [
+  {
+   "fieldname": "clause",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Clause",
+   "reqd": 1,
+   "unique": 1,
+   "description": "The statutory clause exactly as it is cited, e.g. 11(5)(iii) or 17C(v). This is the identifier the section 11(5) rules are matched on, so it must match the clause the core rule table knows."
+  },
+  {
+   "fieldname": "label",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Label",
+   "reqd": 1,
+   "description": "Plain description of the permitted mode, e.g. \"Deposit in a scheduled bank\"."
+  },
+  {
+   "default": "Section 11(5)",
+   "fieldname": "statute",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Statute",
+   "options": "Section 11(5)\nRule 17C",
+   "reqd": 1,
+   "description": "Section 11(5) lists the permitted modes; Rule 17C extends them. Rule 17C is amended periodically, which is why the list is a master here and not hardcoded."
+  },
+  {
+   "fieldname": "column_break_main",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "is_speculative",
+   "fieldtype": "Check",
+   "label": "Speculative",
+   "description": "Foreign contribution may not be used for any speculative activity, so an FCRA fund cannot be invested in a mode flagged here."
+  },
+  {
+   "default": "0",
+   "fieldname": "allows_equity",
+   "fieldtype": "Check",
+   "label": "Allows Equity",
+   "description": "Whether equity shares may be held under this clause. Most 11(5) modes are debt or deposit modes and do not permit equity."
+  },
+  {
+   "default": "0",
+   "fieldname": "citation_verified",
+   "fieldtype": "Check",
+   "label": "Citation Verified",
+   "description": "Tick once the clause number has been checked against the currently notified text. Section 11(5) clauses are seeded verified; Rule 17C clauses are not, because the rule has been amended repeatedly and a wrong citation on an audit schedule is worse than none. The Investment Register warns while book value sits under an unverified clause."
+  },
+  {
+   "default": "0",
+   "fieldname": "disabled",
+   "fieldtype": "Check",
+   "label": "Disabled",
+   "description": "Disable rather than delete a mode withdrawn by amendment: investments already made under it must keep their citation."
+  },
+  {
+   "fieldname": "section_notes",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "notes",
+   "fieldtype": "Small Text",
+   "label": "Notes",
+   "description": "Conditions attached to the clause - issuer eligibility, tenure caps, notification references."
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [
+  {
+   "group": "Investments",
+   "link_doctype": "Trust Investment",
+   "link_fieldname": "mode"
+  }
+ ],
+ "modified": "2026-08-06 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Trust Compliance",
+ "name": "Investment Mode",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Accounts Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "read": 1,
+   "report": 1,
+   "export": 1,
+   "role": "Accounts User"
+  },
+  {
+   "read": 1,
+   "report": 1,
+   "export": 1,
+   "role": "Auditor"
+  }
+ ],
+ "row_format": "Dynamic",
+ "search_fields": "label,statute",
+ "sort_field": "clause",
+ "sort_order": "ASC",
+ "states": [],
+ "title_field": "label",
+ "track_changes": 1
+}

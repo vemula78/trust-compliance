@@ -14,6 +14,8 @@
   "bank_account",
   "fcra_bank_account",
   "property_tax_expense_account",
+  "investment_income_account",
+  "tds_receivable_account",
   "receipt_prefix",
   "section_registrations",
   "trust_pan",
@@ -87,6 +89,20 @@
    "fieldtype": "Link",
    "label": "Property Tax Expense Account",
    "options": "Account"
+  },
+  {
+   "fieldname": "investment_income_account",
+   "fieldtype": "Link",
+   "label": "Investment Income Account",
+   "options": "Account",
+   "description": "Credited by interest or dividend on an investment. Must be an Income account: income on a corpus investment is income of the year, not corpus, and belongs in the 85% application test."
+  },
+  {
+   "fieldname": "tds_receivable_account",
+   "fieldtype": "Link",
+   "label": "TDS Receivable Account",
+   "options": "Account",
+   "description": "Tax deducted at source on investment income. An Asset account: TDS is recoverable, and is not application of income."
   },
   {
    "default": "80G",

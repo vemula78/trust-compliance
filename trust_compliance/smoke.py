@@ -172,7 +172,13 @@ def _setup() -> dict:
                                                 "Equity"),
         "property_tax_expense_account": _account("Property Tax", "Indirect Expenses",
                                                  "Expense"),
+        "investment_income_account": _account("Investment Income", "Indirect Income",
+                                              "Income"),
+        "tds_receivable_account": _account("TDS Receivable", "Tax Assets", "Asset"),
     }
+    # Balance-sheet home for investments, and a deliberately non-11(5) instrument
+    # account so the register's violation path can be exercised.
+    _account("Investments - Deposits", "Investments", "Asset")
     _account("Office Administration", "Indirect Expenses", "Expense", is_administrative=1)
     _account("Medical Supplies", "Indirect Expenses", "Expense")
 

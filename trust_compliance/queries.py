@@ -121,6 +121,62 @@ def form_10_accumulations(company: str, financial_year: str | None = None) -> li
     )
 
 
+def investments(company: str) -> list[dict]:
+    """Submitted investments with the fund attributes the 11(5) check needs."""
+    rows = frappe.get_all(
+        "Trust Investment",
+        filters={"company": company, "docstatus": 1},
+        fields=[
+            "name", "investment_name", "fund", "mode", "instrument_type", "issuer",
+            "issuer_is_psu", "counterparty", "folio_no", "cost", "book_value",
+            "interest_rate", "payout_type", "purchase_date", "maturity_date",
+            "is_corpus", "status",
+        ],
+        order_by="purchase_date, name",
+    )
+    if not rows:
+        return rows
+
+    modes = {
+        mode.name: mode
+        for mode in frappe.get_all(
+            "Investment Mode",
+            fields=["name", "clause", "label", "is_speculative", "allows_equity",
+                    "citation_verified"],
+        )
+    }
+    for row in rows:
+        mode = modes.get(row.mode)
+        # `mode_clause` is what the pure rules key on; the label is for display.
+        row.mode_clause = mode.clause if mode else None
+        row.mode_label = mode.label if mode else None
+        row.is_speculative = mode.is_speculative if mode else 0
+        row.allows_equity = mode.allows_equity if mode else 0
+        row.citation_verified = mode.citation_verified if mode else 0
+        row.is_equity = row.instrument_type == "Equity Shares"
+        # The pure register keys rows on `investment`; `amount` is what the
+        # 11(5) validator reads as the sum at stake.
+        row.investment = row.name
+        row.amount = row.cost
+
+    return rows
+
+
+def investment_transactions(company: str) -> list[dict]:
+    """Submitted investment transactions, unclipped.
+
+    Not windowed here: `build_investment_register` applies `as_on` itself, and it
+    needs the earlier rows to arrive at a book value.
+    """
+    return frappe.get_all(
+        "Investment Transaction",
+        filters={"company": company, "docstatus": 1},
+        fields=["name", "investment", "kind", "transaction_date as date",
+                "gross_amount as amount", "tds", "fund"],
+        order_by="transaction_date, name",
+    )
+
+
 def window_for(filters: dict) -> tuple:
     """Report window from a `financial_year` filter, or (None, None) for all time."""
     financial_year = (filters or {}).get("financial_year")
