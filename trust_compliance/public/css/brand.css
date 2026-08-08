@@ -1,0 +1,49 @@
+/*
+ * Sri Sathya Sai brand overrides for the desk shell.
+ *
+ * Scoped narrowly on purpose: the desk is a large, dense framework UI, and
+ * overriding every widget's colors app-wide risks breaking contrast in
+ * places nobody looked at (form fields, list view badges, chart colors).
+ * This only touches the three surfaces a user actually associates with
+ * "whose app is this" - the navbar, the primary action color, and page
+ * titles - by overriding Frappe's own CSS variables (`--primary-color`,
+ * `--primary`, `--btn-primary`) rather than fighting individual selectors,
+ * so the rest of the desk's own styling (contrast, hover states, dark mode)
+ * still comes from Frappe and stays correct.
+ *
+ * Loaded via `app_include_css` in hooks.py, bundled by `bench build`.
+ */
+
+@import url("https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Lato:wght@400;600;700&display=swap");
+
+:root {
+	--sss-blue-deep: #003366;
+	--sss-orange: #e07b39;
+	--sss-gold: #c8a84b;
+
+	--primary-color: var(--sss-orange);
+	--primary: var(--sss-orange);
+	--btn-primary: var(--sss-orange);
+}
+
+.navbar {
+	background-color: var(--sss-blue-deep) !important;
+	border-bottom: 2px solid var(--sss-gold);
+}
+
+.navbar .navbar-brand,
+.navbar a,
+.navbar .icon use {
+	color: #fff !important;
+	fill: #fff !important;
+}
+
+.page-title .title-text,
+.page-head .title-text {
+	font-family: "Playfair Display", Georgia, serif;
+	color: var(--sss-blue-deep);
+}
+
+body {
+	font-family: "Lato", Arial, sans-serif;
+}

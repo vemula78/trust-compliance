@@ -9,6 +9,10 @@ app_email = "vemula78@gmail.com"
 app_license = "mit"
 required_apps = ["erpnext"]
 
+# Sri Sathya Sai brand: navbar, primary action color, page titles. See the
+# file itself for why this is deliberately narrow rather than a full re-skin.
+app_include_css = "/assets/trust_compliance/css/brand.css"
+
 after_install = "trust_compliance.install.after_install"
 before_uninstall = "trust_compliance.install.before_uninstall"
 
