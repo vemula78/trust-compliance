@@ -204,6 +204,8 @@ no two can disagree with the ledger, and all computed by the tested pure functio
 | **Investment Register** | Holdings at cost with the 11(5) clause re-checked per row, income and TDS shown separately, and any violation named. |
 | **Program Utilisation** | Grant received, spent, budget and utilisation per program, with the funds that paid for it. Spending tagged to no program is disclosed rather than pooled into an "unassigned" row, because that difference is exactly what reconciles this report to the Income and Expenditure statement. |
 | **Inter Unit Eliminations** | What a consolidated statement must remove, per pair of units, with the paying unit's expense reconciled against the receiving unit's grant income. |
+| **Grant Register** | Per-fund "Grant Received in Advance" schedule — received, recognised as income, outstanding — for a donation receipted with `is_grant` set. |
+| **TDS Payable Register** | Per-fund tax the Trust itself deducted at source and has not yet remitted — the payable-side counterpart of the Investment Register's TDS column. |
 
 Plus the **80G Donation Receipt** print format, and a **Form 10BE certificate**
 rendered per donor per financial year from the same computation that produces the
@@ -296,9 +298,6 @@ Tracked deliberately, not hidden:
 - **CSV export shape** for Form 10BD is the report's own export, not the utility's
   exact template. The columns are named to match; the mapping has not been tested
   against a live filing.
-- **Program / inter-unit accounting** (Trust → hospital, Trust → school transfers
-  with elimination on consolidation, and program budget-vs-utilisation) is the
-  remaining piece of Phase 11 and is not built.
 - **Property tax reminders** are not automated. The Property Register shows what is
   overdue and what is due next, but nothing emails anyone; a Notification on
   Property Tax Schedule would cover it.
@@ -307,6 +306,47 @@ Tracked deliberately, not hidden:
   fund on the parent and on its references. That is correct for fund accounting —
   money leaves a specific fund's bank — but it is extra keying, and a default
   dimension per company only pre-fills the general fund.
+
+## Known deviations from real audited practice
+
+A subagent read three years of SSSCT's real audited financial statements
+(FY21-22 to FY23-24) against this app's design on 08-Aug-2026. Two findings
+became code (grant deferred income, TDS Payable, both above); two are
+recorded here as a deliberate choice to keep the app's design over what the
+real accounts happen to do, so the reasoning is not lost the next time someone
+notices the same gap:
+
+- **Only two named funds exist in the real balance sheet** — Capital (Corpus)
+  and General. No "Restricted"/"Designated" as named equity; restricted money
+  is now a liability here too, once received as a grant (see the Grant
+  Register above) — but a Restricted fund still exists as a class, because a
+  restricted donation that is *not* a grant (no stated condition of use, just
+  a donor's earmark) still needs somewhere to sit that a general donation
+  does not. Kept as a reasonable design choice, not changed to match the
+  two-fund presentation literally.
+- **Investments are pooled, not one-fund-per-instrument.** Real audited
+  Schedule D pools every instrument against total Sources of Funds with no
+  per-instrument fund tag. `Trust Investment.fund` stays mandatory anyway —
+  see the note at the top of `core/investment.py`: real practice not tracking
+  this is arguably the gap, not the app, because FC-4 and corpus
+  identifiability need per-instrument fund identity for any instrument that
+  *is* FCRA- or corpus-funded, and pooling would remove the answer to that
+  question that the app currently has.
+- Confirmed matching this app's design exactly, no action needed: interest and
+  dividend never become corpus, and no section 11(5)/Rule 17C citation appears
+  anywhere in three years of audited notes (consistent with this app shipping
+  no Rule 17C table either).
+- **Donations are recognised on a cash basis even though the rest of the books
+  are accrual** — a stated, deliberate exception in the real accounting
+  policy. This app already posts a donation only on receipt (there is no
+  "donation pledged" document), so it already matches.
+- **Inter-unit transfers are folded into the parent's functional expense head**
+  in the real accounts, not a standalone line, and the placement is
+  inconsistent year to year. The app's distinct `Inter Unit Transfer` GL line
+  is more granular and consistent than real practice — not wrong, kept as is.
+
+Source PDFs are at `~/Documents/SSSCT-Financials/`, outside this repository —
+real Trust financial records are not committed.
 
 ## Provenance
 

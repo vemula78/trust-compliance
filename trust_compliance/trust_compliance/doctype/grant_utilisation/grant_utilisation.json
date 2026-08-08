@@ -1,0 +1,199 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "naming_series:",
+ "creation": "2026-08-08 00:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "is_submittable": 1,
+ "field_order": [
+  "naming_series",
+  "company",
+  "utilisation_date",
+  "column_break_head",
+  "fund",
+  "fund_class",
+  "section_amount",
+  "amount",
+  "outstanding_balance",
+  "column_break_amount",
+  "reference",
+  "purpose",
+  "section_gl",
+  "journal_entry",
+  "column_break_gl",
+  "amended_from",
+  "section_remarks",
+  "remarks"
+ ],
+ "fields": [
+  {
+   "default": "GU-.YYYY.-",
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Series",
+   "options": "GU-.YYYY.-",
+   "reqd": 1
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "in_standard_filter": 1,
+   "label": "Company",
+   "options": "Company",
+   "reqd": 1
+  },
+  {
+   "fieldname": "utilisation_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Utilisation Date",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_head",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "fund",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Fund",
+   "options": "Fund",
+   "reqd": 1,
+   "description": "Restricted fund whose grant liability this recognises as income. Must be Restricted class - that is the only class a grant donation can be received into."
+  },
+  {
+   "fetch_from": "fund.fund_class",
+   "fieldname": "fund_class",
+   "fieldtype": "Data",
+   "label": "Fund Class",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_amount",
+   "fieldtype": "Section Break",
+   "label": "Recognition"
+  },
+  {
+   "fieldname": "amount",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Amount",
+   "options": "Company:company:default_currency",
+   "reqd": 1,
+   "description": "Amount of grant liability recognised as income now. Cannot exceed the fund's outstanding grant balance."
+  },
+  {
+   "fieldname": "outstanding_balance",
+   "fieldtype": "Currency",
+   "label": "Outstanding Balance Before This",
+   "options": "Company:company:default_currency",
+   "read_only": 1,
+   "no_copy": 1,
+   "description": "The fund's grant liability balance at the moment this document was last validated, before this recognition. Informational - the authoritative check runs again, against the ledger, on submit."
+  },
+  {
+   "fieldname": "column_break_amount",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "reference",
+   "fieldtype": "Data",
+   "label": "Reference",
+   "description": "The Trust's own voucher for the expenditure this recognises income against - e.g. a Purchase Invoice or Journal Entry number. Recorded for cross-reference only; this document posts its own recognition entry independently of that voucher."
+  },
+  {
+   "fieldname": "purpose",
+   "fieldtype": "Small Text",
+   "label": "Purpose",
+   "description": "What the grant was utilised for."
+  },
+  {
+   "fieldname": "section_gl",
+   "fieldtype": "Section Break",
+   "label": "Accounting"
+  },
+  {
+   "fieldname": "journal_entry",
+   "fieldtype": "Link",
+   "label": "Journal Entry",
+   "options": "Journal Entry",
+   "read_only": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "column_break_gl",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Grant Utilisation",
+   "print_hide": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_remarks",
+   "fieldtype": "Section Break",
+   "label": "Remarks",
+   "collapsible": 1
+  },
+  {
+   "fieldname": "remarks",
+   "fieldtype": "Small Text",
+   "label": "Remarks"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-08-08 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Trust Compliance",
+ "name": "Grant Utilisation",
+ "naming_rule": "By \"Naming Series\" field",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "amend": 1,
+   "cancel": 1,
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Accounts Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Accounts User",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "read": 1,
+   "report": 1,
+   "export": 1,
+   "role": "Auditor"
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "utilisation_date",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

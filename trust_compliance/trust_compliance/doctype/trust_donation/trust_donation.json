@@ -24,6 +24,7 @@
   "fund",
   "column_break_amount",
   "is_corpus",
+  "is_grant",
   "is_anonymous",
   "deposit_account",
   "section_purpose",
@@ -153,6 +154,13 @@
    "fieldtype": "Check",
    "label": "Corpus Donation",
    "description": "Credits the corpus equity account instead of donation income - corpus is capital, not income of the year."
+  },
+  {
+   "default": "0",
+   "fieldname": "is_grant",
+   "fieldtype": "Check",
+   "label": "Grant (Deferred Income)",
+   "description": "Credits the grant liability account instead of donation income. Income is recognised only as the grant is utilised, via a Grant Utilisation - matching real audited practice, where a restricted grant is carried as \"Grant Received in Advance\" until spent. Only a Restricted-class fund may receive a grant donation."
   },
   {
    "default": "0",

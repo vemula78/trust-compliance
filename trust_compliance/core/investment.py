@@ -1,5 +1,13 @@
 """Section 11(5) / Rule 17C investment-of-corpus compliance.
 
+Deliberately unchanged by the 08-Aug real-accounts review: real audited Schedule
+D pools every instrument against total Sources of Funds with no per-instrument
+fund tag, but relaxing `Trust Investment.fund` to optional would remove the one
+thing this module depends on to answer the FC-4 and corpus-identifiability
+questions for an instrument that *is* FCRA- or corpus-funded. The mismatch is
+real practice's gap, not this module's - see README.md "Known deviations from
+real audited practice".
+
 Pure module: no frappe import. A 12A/12AB trust may invest its corpus and
 accumulated income only in the forms and modes listed in section 11(5) of the
 Income-tax Act 1961, as extended by Rule 17C of the Income-tax Rules 1962.

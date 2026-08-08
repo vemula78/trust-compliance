@@ -254,6 +254,42 @@ def project_budgets(company: str, from_date=None, to_date=None) -> list[dict]:
     )
 
 
+def grant_liability_rows(company: str, upto: object = None) -> list[dict]:
+    """GL rows against the configured grant liability account.
+
+    Filtered out of the same `gl_rows()` read rather than a second query, for the
+    reason stated at the top of this module: two reads of the ledger could
+    disagree with each other, one could not. Returns nothing, rather than
+    throwing, when no grant liability account is configured - a company with no
+    grants has nothing to show on the register, which is a fact, not an error.
+    """
+    from trust_compliance.trust_compliance.doctype.trust_compliance_settings.trust_compliance_settings import (
+        get_company_accounts,
+    )
+
+    account = get_company_accounts(company).get("grant_liability_account")
+    if not account:
+        return []
+    return [row for row in gl_rows(company, upto=upto) if row["account"] == account]
+
+
+def tds_payable_rows(company: str, upto: object = None) -> list[dict]:
+    """GL rows against the configured TDS payable account.
+
+    Same reasoning as `grant_liability_rows()`: filtered out of the one GL read
+    rather than a second query, and returns nothing rather than throwing when no
+    TDS payable account is configured.
+    """
+    from trust_compliance.trust_compliance.doctype.trust_compliance_settings.trust_compliance_settings import (
+        get_company_accounts,
+    )
+
+    account = get_company_accounts(company).get("tds_payable_account")
+    if not account:
+        return []
+    return [row for row in gl_rows(company, upto=upto) if row["account"] == account]
+
+
 def inter_unit_gl_rows(companies: list[str], from_date=None, to_date=None) -> list[dict]:
     """GL rows of the vouchers flagged as inter-unit transfers.
 

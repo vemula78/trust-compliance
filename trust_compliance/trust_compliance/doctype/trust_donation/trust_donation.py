@@ -47,6 +47,7 @@ class TrustDonation(Document):
         self._validate_fund()
         self._validate_foreign_contribution()
         self._validate_corpus()
+        self._validate_grant()
         self._validate_cash_limits()
         self._validate_pan_requirement()
         self.financial_year = financial_year_of(self.donation_date)
@@ -163,6 +164,31 @@ class TrustDonation(Document):
                 ).format(self.fund, _(fund.fund_class))
             )
 
+    def _validate_grant(self):
+        """A grant defers into income only out of a Restricted-class fund.
+
+        Deferred recognition exists to match the real accounting policy for
+        donor/government money given for a stated purpose and not yet spent - that
+        is exactly what a Restricted fund is for. A Corpus fund is capital and
+        never recognises income at all (see `_validate_corpus`); an Unrestricted
+        or FCRA-general fund has no stated purpose to defer against, so there is
+        nothing for a later Grant Utilisation to recognise it into.
+        """
+        if not self.is_grant:
+            return
+        if self.is_corpus:
+            frappe.throw(
+                _("A donation cannot be both a corpus donation and a grant.")
+            )
+        fund = self._fund()
+        if fund.fund_class != "Restricted":
+            frappe.throw(
+                _(
+                    "Fund {0} is {1} class, so a grant donation cannot go into it. "
+                    "Deferred income recognition applies only to a Restricted fund."
+                ).format(self.fund, _(fund.fund_class))
+            )
+
     def _validate_cash_limits(self):
         """Section 269ST: a single cash receipt above the limit is not permitted."""
         if self.mode != "Cash":
@@ -243,17 +269,22 @@ class TrustDonation(Document):
     def _post_journal_entry(self) -> str:
         """One balanced Journal Entry, fund-tagged on both legs.
 
-        Debit is where the money (or the asset) landed; credit is donation income,
-        or the corpus equity account for a corpus donation - corpus is capital of
-        the Trust and does not pass through income of the year.
+        Debit is where the money (or the asset) landed; credit is one of three
+        accounts depending on what the donation is:
+        - corpus equity, for a corpus donation - corpus is capital of the Trust
+          and does not pass through income of the year;
+        - the grant liability account, for a grant - it is not yet income, and
+          becomes income only as a later Grant Utilisation recognises it;
+        - donation income, for everything else.
         """
         accounts = get_company_accounts(self.company)
         debit_account = self._resolve_debit_account(accounts)
-        credit_account = (
-            accounts["corpus_fund_account"]
-            if self.is_corpus
-            else accounts["donation_income_account"]
-        )
+        if self.is_corpus:
+            credit_account = accounts["corpus_fund_account"]
+        elif self.is_grant:
+            credit_account = self._required_account(accounts, "grant_liability_account")
+        else:
+            credit_account = accounts["donation_income_account"]
 
         remark = _("Donation {0} from {1}").format(self.receipt_no, self.donor_name)
         if self.purpose:
@@ -284,6 +315,25 @@ class TrustDonation(Document):
         entry.insert()
         entry.submit()
         return entry.name
+
+    def _required_account(self, accounts: dict, fieldname: str) -> str:
+        """A configured account, or a setup error naming the one that is missing.
+
+        Unlike `donation_income_account`/`corpus_fund_account`, the grant liability
+        account is not a mandatory field on Trust Company Account - most Trusts
+        have no grants - so a Trust that turns `is_grant` on without configuring it
+        gets a clear setup error instead of a `KeyError`.
+        """
+        account = accounts.get(fieldname)
+        if account:
+            return account
+        frappe.throw(
+            _(
+                "No {0} is configured for {1}. Add it to the company's row in Trust "
+                "Compliance Settings before receipting a grant donation."
+            ).format(_(fieldname.replace("_", " ").title()), self.company),
+            title=_("Setup Incomplete"),
+        )
 
     def _resolve_debit_account(self, accounts: dict) -> str:
         """Where the donation landed.

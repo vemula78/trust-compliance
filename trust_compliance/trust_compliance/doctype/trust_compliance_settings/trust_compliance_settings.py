@@ -23,6 +23,8 @@ REQUIRED_ROOT_TYPES = {
     "property_tax_expense_account": "Expense",
     "investment_income_account": "Income",
     "tds_receivable_account": "Asset",
+    "grant_liability_account": "Liability",
+    "tds_payable_account": "Liability",
 }
 
 

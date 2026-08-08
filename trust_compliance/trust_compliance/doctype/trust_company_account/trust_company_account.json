@@ -16,6 +16,8 @@
   "property_tax_expense_account",
   "investment_income_account",
   "tds_receivable_account",
+  "grant_liability_account",
+  "tds_payable_account",
   "institution_transfer_account",
   "grant_income_account",
   "receipt_prefix",
@@ -105,6 +107,20 @@
    "label": "TDS Receivable Account",
    "options": "Account",
    "description": "Tax deducted at source on investment income. An Asset account: TDS is recoverable, and is not application of income."
+  },
+  {
+   "fieldname": "grant_liability_account",
+   "fieldtype": "Link",
+   "label": "Grant Liability Account",
+   "options": "Account",
+   "description": "Credited by a grant donation instead of income. A Liability account: the real audited practice this app is reconciled against carries restricted grant money as \"Grant Received in Advance\" until spent, and recognises income only as it is utilised - see Grant Utilisation."
+  },
+  {
+   "fieldname": "tds_payable_account",
+   "fieldtype": "Link",
+   "label": "TDS Payable Account",
+   "options": "Account",
+   "description": "Tax the Trust itself deducts at source on a payment to a contractor, professional or employee. A Liability account, remitted to the government - the payable-side counterpart of TDS Receivable. Deduction is posted by ERPNext's own Tax Withholding Category on the Purchase Invoice or Payment Entry; this account is configured here only so the TDS Payable Register can find it."
   },
   {
    "fieldname": "institution_transfer_account",
