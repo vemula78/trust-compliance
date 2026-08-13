@@ -21,6 +21,7 @@ from trust_compliance.core.tds import build_tds_payable_register
 def execute(filters: dict | None = None):
     filters = filters or {}
     company = filters["company"]
+    queries.require_company_read_permission(company)
     as_on = filters.get("as_on")
 
     report = build_tds_payable_register(

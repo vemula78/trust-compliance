@@ -70,6 +70,17 @@ def build_fcra_register(
     than through the donation register therefore still counts in the year it
     arrives, even though it has no row in the detail table; `donation_receipts`
     carries the detail table's total so the two can be compared.
+
+    A row tagged `is_grant_liability` is the one exception to the Asset/Liability
+    skip: a grant is received as a credit to the grant liability account, not to
+    income, so skipping every Liability row would drop the receipt entirely and
+    understate both `receipts` and the admin-cap denominator until the grant
+    happened to be recognised. Grant Utilisation later debits the same liability
+    account and credits income for the same amount in one voucher; both legs are
+    counted here (the liability leg through this same branch, the income leg
+    because Income was never skipped), and they net to zero, so recognition
+    alone creates no second receipt - only the receipt and the eventual expense
+    move the balance.
     """
     window_from = _as_date(from_date)
     window_to = _as_date(to_date)
@@ -110,7 +121,7 @@ def build_fcra_register(
 
     for gl in gl_rows:
         root_type = str(gl.get("root_type"))
-        if root_type in {"Asset", "Liability"}:
+        if root_type in {"Asset", "Liability"} and not gl.get("is_grant_liability"):
             # Contra side of the movements below; counting them would double-count.
             continue
 
@@ -277,16 +288,22 @@ def build_donation_register(
     donations: Iterable[DonationRow],
     from_date: object = None,
     to_date: object = None,
+    anonymous_threshold: float | None = None,
 ) -> dict:
     """Donation register with Section 115BBC anonymous-donation monitoring.
 
     The 115BBC exposure is the excess of anonymous donations over the higher of
-    ANONYMOUS_DONATION_THRESHOLD and 5% of total donations, which is the
-    statutory alternative. Reporting both the threshold and the ratio makes the
-    binding limb of the test visible instead of asserting one.
+    `anonymous_threshold` and 5% of total donations, which is the statutory
+    alternative. Reporting both the threshold and the ratio makes the binding
+    limb of the test visible instead of asserting one. `anonymous_threshold`
+    defaults to the statutory floor, `ANONYMOUS_DONATION_THRESHOLD`; callers pass
+    the configured value from Trust Compliance Settings.
     """
     window_from = _as_date(from_date)
     window_to = _as_date(to_date)
+    threshold = (
+        ANONYMOUS_DONATION_THRESHOLD if anonymous_threshold is None else anonymous_threshold
+    )
 
     rows = [
         dict(donation)
@@ -303,7 +320,7 @@ def build_donation_register(
         sum(float(row.get("amount") or 0) for row in rows if row.get("is_corpus"))
     )
     exempt_limit = max(
-        ANONYMOUS_DONATION_THRESHOLD, round_money(total * ANONYMOUS_DONATION_ALTERNATIVE_RATIO)
+        threshold, round_money(total * ANONYMOUS_DONATION_ALTERNATIVE_RATIO)
     )
 
     return {

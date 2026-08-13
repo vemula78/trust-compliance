@@ -48,18 +48,21 @@ FUNDS = [
 ]
 
 ACCOUNTS = [
-    {"name": "1000 Bank", "is_fcra": 0},
-    {"name": "1001 FCRA Bank", "is_fcra": 1},
-    {"name": "4400 Donation Income", "is_fcra": 0},
+    {"name": "1000 Bank", "is_fcra": 0, "account_type": "Bank"},
+    {"name": "1001 FCRA Bank", "is_fcra": 1, "account_type": "Bank"},
+    {"name": "4400 Donation Income", "is_fcra": 0, "account_type": "Income Account"},
+    {"name": "6300 Office Rent", "is_fcra": 0, "account_type": "Expense Account"},
 ]
 
 
 def gl(account, root_type, debit=0.0, credit=0.0, fund=None,
-       posting_date="2026-06-15", is_administrative=0, voucher_no="JV-0001"):
+       posting_date="2026-06-15", is_administrative=0, voucher_no="JV-0001",
+       is_grant_liability=False):
     return {
         "account": account, "root_type": root_type, "debit": debit, "credit": credit,
         "fund": fund, "posting_date": posting_date,
         "is_administrative": is_administrative, "voucher_no": voucher_no,
+        "is_grant_liability": is_grant_liability,
     }
 
 
@@ -184,6 +187,27 @@ class TestSegregation:
         ]
         errors = validate_fund_segregation(lines, FUNDS, ACCOUNTS)
         assert any("FCRA-designated" in error for error in errors)
+
+    def test_fcra_fund_through_domestic_bank_is_refused(self):
+        # The reverse of the FCRA-bank/domestic-fund rule: an FCRA fund must not
+        # bank through a domestic Bank/Cash account either, or foreign
+        # contribution commingles with the domestic bank balance.
+        lines = [
+            {"fund": "FCRA-GEN", "account": "6300 Office Rent"},
+            {"fund": "FCRA-GEN", "account": "1000 Bank"},
+        ]
+        errors = validate_fund_segregation(lines, FUNDS, ACCOUNTS)
+        assert any("not FCRA-designated" in error for error in errors)
+
+    def test_fcra_fund_through_ordinary_expense_account_is_accepted(self):
+        # The reverse rule is limited to monetary (Bank/Cash) accounts; an FCRA
+        # fund legitimately spends through an ordinary expense account paired
+        # with the FCRA bank account.
+        lines = [
+            {"fund": "FCRA-GEN", "account": "6300 Office Rent"},
+            {"fund": "FCRA-GEN", "account": "1001 FCRA Bank"},
+        ]
+        assert validate_fund_segregation(lines, FUNDS, ACCOUNTS) == []
 
     def test_account_rule_is_skipped_when_accounts_not_supplied(self):
         lines = [
@@ -377,6 +401,61 @@ class TestFCRARegister:
         assert summary["receipts"] == 40_000
         assert summary["closing_balance"] == 90_000
 
+    def test_grant_liability_receipt_counts_as_ledger_receipts(self):
+        # A grant is credited to the grant liability account, not to income, so
+        # it must be tagged is_grant_liability or the receipt vanishes from the
+        # ledger summary entirely (finding: contributor detail 100 vs ledger 0).
+        rows = [
+            gl("2400 Grant Liability", "Liability", credit=100_000, fund="FCRA-GEN",
+               is_grant_liability=True),
+        ]
+        summary = build_fcra_register(rows, [], FUNDS,
+                                     from_date="2026-04-01", to_date="2027-03-31")["summary"]
+        assert summary["receipts"] == 100_000
+        assert summary["closing_balance"] == 100_000
+
+    def test_grant_recognition_alone_creates_no_second_receipt(self):
+        # Grant Utilisation debits the liability and credits income for the same
+        # amount, in one voucher. The two legs must net to zero, not double the
+        # receipt.
+        rows = [
+            gl("2400 Grant Liability", "Liability", credit=100_000, fund="FCRA-GEN",
+               is_grant_liability=True, voucher_no="JV-0001"),
+            gl("2400 Grant Liability", "Liability", debit=40_000, fund="FCRA-GEN",
+               is_grant_liability=True, voucher_no="JV-0002"),
+            gl("4400 Donation Income", "Income", credit=40_000, fund="FCRA-GEN",
+               voucher_no="JV-0002"),
+        ]
+        summary = build_fcra_register(rows, [], FUNDS,
+                                     from_date="2026-04-01", to_date="2027-03-31")["summary"]
+        assert summary["receipts"] == 100_000
+        assert summary["closing_balance"] == 100_000
+
+    def test_recognition_plus_expense_reduces_closing_balance_by_the_expense_only(self):
+        rows = [
+            gl("2400 Grant Liability", "Liability", credit=100_000, fund="FCRA-GEN",
+               is_grant_liability=True, voucher_no="JV-0001"),
+            gl("2400 Grant Liability", "Liability", debit=40_000, fund="FCRA-GEN",
+               is_grant_liability=True, voucher_no="JV-0002"),
+            gl("4400 Donation Income", "Income", credit=40_000, fund="FCRA-GEN",
+               voucher_no="JV-0002"),
+            gl("6100 Medical Supplies", "Expense", debit=40_000, fund="FCRA-GEN",
+               voucher_no="JV-0003"),
+        ]
+        summary = build_fcra_register(rows, [], FUNDS,
+                                     from_date="2026-04-01", to_date="2027-03-31")["summary"]
+        assert summary["utilized"] == 40_000
+        assert summary["closing_balance"] == 60_000
+
+    def test_domestic_grant_liability_activity_is_still_excluded(self):
+        rows = [
+            gl("2400 Grant Liability", "Liability", credit=100_000, fund="GEN",
+               is_grant_liability=True),
+        ]
+        summary = build_fcra_register(rows, [], FUNDS,
+                                     from_date="2026-04-01", to_date="2027-03-31")["summary"]
+        assert summary["receipts"] == 0
+
     def test_receipts_detail_lists_only_fcra_donations(self):
         donations = [
             {"name": "D1", "receipt_no": "80G/2026-27/0001", "donation_date": "2026-06-01",
@@ -491,6 +570,18 @@ class TestDonationRegisterAnd10BD:
         assert summary["anonymous_exempt_limit"] == 100_000
         assert summary["anonymous_taxable"] == 400_000
         assert summary["anonymous_threshold_breached"] is True
+
+    def test_configured_anonymous_threshold_changes_the_exempt_limit(self):
+        # Trust Compliance Settings.anonymous_donation_threshold must actually be
+        # honoured when the statutory floor is the binding limb, not silently
+        # ignored in favour of the hardcoded default.
+        summary = build_donation_register(self.DONATIONS, anonymous_threshold=50_000)["summary"]
+        assert summary["anonymous_exempt_limit"] == 79_000  # 5% of 15,80,000 now wins
+        assert summary["anonymous_taxable"] == 0
+
+    def test_default_anonymous_threshold_unchanged(self):
+        summary = build_donation_register(self.DONATIONS)["summary"]
+        assert summary["anonymous_exempt_limit"] == 100_000
 
     def test_10bd_groups_by_donor_and_splits_cash_from_others(self):
         report = build_form_10bd(self.DONATIONS)

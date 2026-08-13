@@ -13,19 +13,29 @@ from trust_compliance.core.compliance import build_donation_register
 def execute(filters: dict | None = None):
     filters = filters or {}
     company = filters["company"]
+    queries.require_company_read_permission(company)
     from_date, to_date = queries.window_for(filters)
 
+    donations = queries.donations(company, from_date, to_date)
+    if filters.get("fund"):
+        donations = [row for row in donations if row.get("fund") == filters["fund"]]
+    if filters.get("mode"):
+        donations = [row for row in donations if row.get("mode") == filters["mode"]]
+
+    # Filtered before building the summary, not after: the summary (and Section
+    # 115BBC anonymous-donation exposure) must describe the same donations the
+    # table and chart show, or a Fund/Mode filter makes the narrative contradict
+    # the rows beneath it.
     report = build_donation_register(
-        queries.donations(company, from_date, to_date),
+        donations,
         from_date=from_date,
         to_date=to_date,
+        anonymous_threshold=frappe.db.get_single_value(
+            "Trust Compliance Settings", "anonymous_donation_threshold"
+        ),
     )
 
     rows = report["rows"]
-    if filters.get("fund"):
-        rows = [row for row in rows if row.get("fund") == filters["fund"]]
-    if filters.get("mode"):
-        rows = [row for row in rows if row.get("mode") == filters["mode"]]
 
     data = [
         {

@@ -37,6 +37,7 @@ class TrustComplianceSettings(Document):
     def validate(self):
         self._warn_if_not_indian_number_format()
         seen: set[str] = set()
+        prefixes: dict[str, str] = {}
         for row in self.company_accounts:
             if row.company in seen:
                 frappe.throw(
@@ -44,6 +45,20 @@ class TrustComplianceSettings(Document):
                 )
             seen.add(row.company)
             self._validate_row(row)
+
+            prefix = (row.get("receipt_prefix") or "").strip()
+            if prefix:
+                if prefix in prefixes:
+                    frappe.throw(
+                        _(
+                            "Receipt prefix {0} is used by both {1} and {2}. Two companies "
+                            "sharing a prefix will both allocate the same receipt number "
+                            "(e.g. {0}/2026-27/0001) and the second one to submit will fail "
+                            "on the database's unique constraint. Give each company its own "
+                            "prefix."
+                        ).format(prefix, prefixes[prefix], row.company)
+                    )
+                prefixes[prefix] = row.company
 
     def _warn_if_not_indian_number_format(self):
         """Warn - loudly, but do not silently change a global setting.

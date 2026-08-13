@@ -14,7 +14,13 @@ from typing import Iterable, Mapping, Sequence
 
 Line = Mapping[str, object]  # {"fund": str | None, "account": str | None}
 FundRow = Mapping[str, object]  # {"name": str, "is_default": bool, "is_fcra": bool}
-AccountRow = Mapping[str, object]  # {"name": str, "is_fcra": bool}
+AccountRow = Mapping[str, object]  # {"name": str, "is_fcra": bool, "account_type": str}
+
+#: Account types that actually hold money. An FCRA fund posting to one of these
+#: that is not FCRA-designated commingles foreign contribution with the domestic
+#: bank balance; an FCRA fund posting to an ordinary expense/income account is
+#: not commingling by itself, so the reverse rule is limited to these types.
+MONETARY_ACCOUNT_TYPES = frozenset({"Bank", "Cash"})
 
 
 def _truthy(value: object) -> bool:
@@ -59,6 +65,16 @@ def validate_fund_segregation(
     domestic credit - such a voucher tags no fund at all and would otherwise
     read as wholly domestic. Callers that prove the pairing themselves (the
     Donation doctype does) may omit `accounts` and take only rules 1 and 2.
+
+    Rule 4 - the reverse of rule 3, monetary accounts only: a line resolving to
+    an FCRA fund that posts to a Bank or Cash account must use an FCRA-designated
+    one. Without this, a manual journal can debit an expense and credit a
+    domestic bank account while tagging both legs to an FCRA fund - the voucher
+    reads as wholly FCRA by fund, but the money lands in the domestic bank
+    balance. Non-monetary accounts (expense, income, investment) are exempt: an
+    FCRA fund legitimately spends through ordinary expense accounts, and
+    requiring `is_fcra` on every one of those would be a different, unintended
+    rule.
     """
     errors: list[str] = []
     funds_by_name = {str(fund["name"]): fund for fund in funds}
@@ -73,6 +89,7 @@ def validate_fund_segregation(
     domestic_funds: set[str] = set()
     unknown_funds: set[str] = set()
     unpaired_fcra_accounts: set[str] = set()
+    fcra_funds_in_domestic_accounts: set[str] = set()
 
     for line in lines:
         raw_fund = line.get("fund")
@@ -90,6 +107,15 @@ def validate_fund_segregation(
         if account is not None and _truthy(account.get("is_fcra")):
             if fund is None or not _truthy(fund.get("is_fcra")):
                 unpaired_fcra_accounts.add(str(account["name"]))
+
+        if (
+            account is not None
+            and not _truthy(account.get("is_fcra"))
+            and account.get("account_type") in MONETARY_ACCOUNT_TYPES
+            and fund is not None
+            and _truthy(fund.get("is_fcra"))
+        ):
+            fcra_funds_in_domestic_accounts.add(str(account["name"]))
 
         if fund is None:
             continue
@@ -120,6 +146,20 @@ def validate_fund_segregation(
                 ", ".join(codes),
                 "are" if plural else "is",
                 "s" if plural else "",
+            )
+        )
+
+    if fcra_funds_in_domestic_accounts:
+        codes = sorted(fcra_funds_in_domestic_accounts)
+        plural = len(codes) > 1
+        errors.append(
+            "Account{} {} {} not FCRA-designated, so an FCRA fund cannot bank "
+            "through {}. Foreign contribution must move through the "
+            "FCRA-designated bank account only.".format(
+                "s" if plural else "",
+                ", ".join(codes),
+                "are" if plural else "is",
+                "it" if not plural else "them",
             )
         )
 

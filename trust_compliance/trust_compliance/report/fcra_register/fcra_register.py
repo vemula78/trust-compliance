@@ -19,10 +19,18 @@ from trust_compliance.core.compliance import FCRA_ADMIN_CAP_PERCENT, build_fcra_
 def execute(filters: dict | None = None):
     filters = filters or {}
     company = filters["company"]
+    queries.require_company_read_permission(company)
     from_date, to_date = queries.window_for(filters)
 
+    ledger = queries.gl_rows(company, upto=to_date)
+    grant_account = queries.grant_liability_account(company)
+    if grant_account:
+        for row in ledger:
+            if row["account"] == grant_account:
+                row["is_grant_liability"] = True
+
     report = build_fcra_register(
-        queries.gl_rows(company, upto=to_date),
+        ledger,
         queries.donations(company),
         queries.funds(company),
         from_date=from_date,

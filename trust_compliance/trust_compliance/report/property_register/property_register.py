@@ -13,10 +13,13 @@ import frappe
 from frappe import _
 from frappe.utils import flt, fmt_money, getdate, nowdate
 
+from trust_compliance import queries
+
 
 def execute(filters: dict | None = None):
     filters = filters or {}
     company = filters["company"]
+    queries.require_company_read_permission(company)
 
     conditions = ["p.company = %(company)s"]
     params: dict = {"company": company}

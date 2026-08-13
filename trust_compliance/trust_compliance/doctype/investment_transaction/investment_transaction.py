@@ -57,7 +57,7 @@ class InvestmentTransaction(Document):
         journal_entry = self._post_journal_entry()
         self.db_set("journal_entry", journal_entry, update_modified=False)
         if self._classification() == "asset":
-            self._reduce_book_value()
+            self._recompute_book_value_and_status()
 
     def on_cancel(self):
         self.flags.ignore_links = True
@@ -67,7 +67,7 @@ class InvestmentTransaction(Document):
                 entry.flags.ignore_permissions = True
                 entry.cancel()
         if self._classification() == "asset":
-            self._restore_book_value()
+            self._recompute_book_value_and_status()
 
     # -- validation ---------------------------------------------------------
 
@@ -357,20 +357,44 @@ class InvestmentTransaction(Document):
 
     # -- book value ---------------------------------------------------------
 
-    def _reduce_book_value(self):
-        """Reduce the holding, and re-derive the instrument's status from it.
+    def _recompute_book_value_and_status(self):
+        """Derive book value and status from every submitted Redemption/Maturity.
 
-        A Maturity always leaves the instrument Matured even if a residual value
-        remains - the instrument has run its term, which is a different fact from
-        having been cashed out. A Redemption that takes the book value to zero
-        leaves it Redeemed; a partial one leaves it Active.
+        Not an increment/decrement on this transaction alone: that went wrong the
+        moment transactions were cancelled out of order. Two partial Redemptions
+        followed by a Maturity, then cancelling the *first* Redemption, must not
+        reopen the instrument to Active while the Maturity is still submitted and
+        closes it. Recomputing from the full submitted set after every submit and
+        cancel is safe regardless of which one is touched or in what order.
+
+        This document is excluded from the query by name rather than relied on to
+        be at a particular docstatus: on submit it is already live and belongs in
+        the set on its own account; on cancel it must not count itself.
         """
         investment = self._investment()
-        remaining = flt(investment.book_value) - flt(self.gross_amount)
+        rows = frappe.get_all(
+            "Investment Transaction",
+            filters={
+                "investment": investment.name,
+                "docstatus": 1,
+                "kind": ["in", ("Redemption", "Maturity")],
+                "name": ["!=", self.name],
+            },
+            fields=["kind", "gross_amount"],
+        )
+        if self.docstatus == 1:
+            rows = [*rows, frappe._dict(kind=self.kind, gross_amount=self.gross_amount)]
+
+        redeemed = sum(flt(row.gross_amount) for row in rows)
+        remaining = flt(investment.cost) - redeemed
         if remaining < 0.01:
             remaining = 0
 
-        if self.kind == "Maturity":
+        # A Maturity always leaves the instrument Matured even if a residual
+        # value remains - the instrument has run its term, which is a different
+        # fact from having been cashed out - and that holds regardless of order,
+        # so any submitted Maturity in the set is terminal.
+        if any(row.kind == "Maturity" for row in rows):
             status = "Matured"
         elif remaining <= 0:
             status = "Redeemed"
@@ -381,25 +405,6 @@ class InvestmentTransaction(Document):
             "Trust Investment",
             investment.name,
             {"book_value": remaining, "status": status},
-            update_modified=False,
-        )
-        self._clear_investment_cache()
-
-    def _restore_book_value(self):
-        """Put the capital back on cancellation and reopen the instrument.
-
-        The status returns to Active rather than to whatever it was before: the
-        cancelled receipt is the only thing that closed it, so undoing the receipt
-        undoes the closure.
-        """
-        investment = self._investment()
-        frappe.db.set_value(
-            "Trust Investment",
-            investment.name,
-            {
-                "book_value": flt(investment.book_value) + flt(self.gross_amount),
-                "status": "Active",
-            },
             update_modified=False,
         )
         self._clear_investment_cache()
@@ -439,6 +444,7 @@ class InvestmentTransaction(Document):
                     "is_fcra",
                     "is_corpus",
                     "investment_account",
+                    "cost",
                     "book_value",
                     "status",
                     "docstatus",

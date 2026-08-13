@@ -21,6 +21,7 @@ from trust_compliance.core.compliance import (
 def execute(filters: dict | None = None):
     filters = filters or {}
     company = filters["company"]
+    queries.require_company_read_permission(company)
     financial_year = filters.get("financial_year")
     from_date, to_date = queries.window_for(filters)
 

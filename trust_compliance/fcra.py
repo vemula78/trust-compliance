@@ -37,7 +37,7 @@ def _accounts_by_name(account_names: set[str]) -> list[dict]:
     return frappe.get_all(
         "Account",
         filters={"name": ("in", list(account_names))},
-        fields=["name", "root_type", "is_fcra", "is_administrative"],
+        fields=["name", "root_type", "account_type", "is_fcra", "is_administrative"],
     )
 
 
@@ -51,6 +51,27 @@ def _throw(errors: list[str]) -> None:
     )
 
 
+def _enforcement_enabled() -> bool:
+    """Whether the migration-only bypass (Trust Compliance Settings) is off.
+
+    Defaults to enforcing: a site with no Trust Compliance Settings document yet
+    (or the field not set) must fail closed, not silently skip the wall.
+    """
+    value = frappe.db.get_single_value("Trust Compliance Settings", "enforce_fund_on_gl")
+    return value is None or bool(value)
+
+
+def _log_enforcement_disabled(doc) -> None:
+    frappe.log_error(
+        title="FCRA segregation enforcement disabled",
+        message=(
+            f"Trust Compliance Settings.enforce_fund_on_gl is off: "
+            f"{doc.doctype} {doc.name} was submitted without a fund-segregation "
+            f"check."
+        ),
+    )
+
+
 def enforce_on_submitted_voucher(doc, method=None) -> None:
     """Validate segregation against the GL entries this voucher just produced.
 
@@ -59,6 +80,10 @@ def enforce_on_submitted_voucher(doc, method=None) -> None:
     entries at all.
     """
     if doc.doctype in EXEMPT_VOUCHER_TYPES:
+        return
+
+    if not _enforcement_enabled():
+        _log_enforcement_disabled(doc)
         return
 
     funds = _fund_master(getattr(doc, "company", None))
@@ -98,6 +123,9 @@ def enforce_on_journal_entry_draft(doc, method=None) -> None:
     if not rows:
         return
 
+    if not _enforcement_enabled():
+        return
+
     funds = _fund_master(getattr(doc, "company", None))
     if not funds:
         return
@@ -118,10 +146,14 @@ def validate_account_flags(doc, method=None) -> None:
     An FCRA-designated account must not also be usable for domestic money, and
     the flag must not be flipped once the account carries postings - doing so
     would silently reclassify history and change every FC-4 already filed.
-    """
-    if not doc.get("is_fcra") and not doc.get("is_administrative"):
-        return
 
+    The old early return here checked only the *current* `is_fcra`/
+    `is_administrative` values, so unchecking `is_fcra` on an existing FCRA
+    account (current value now 0) skipped the whole function before the old
+    value was ever compared - removing the designation from an account with live
+    postings went through silently. The transition must be checked in both
+    directions, so the guard can only return early for a genuinely new document.
+    """
     if doc.is_new():
         return
 

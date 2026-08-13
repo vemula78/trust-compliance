@@ -13,6 +13,17 @@ import frappe
 from trust_compliance.core.financial_year import financial_year_window
 
 
+def require_company_read_permission(company: str) -> None:
+    """Refuse a report before it reads anything, for a company the user cannot read.
+
+    Every query in this module goes through `frappe.get_all` or raw SQL, neither
+    of which applies document-level User Permissions. Without this check, a user
+    restricted to one Company could type another Company into a report filter and
+    read its donations, ledger, grants, TDS, and property data.
+    """
+    frappe.get_doc("Company", company).check_permission("read")
+
+
 def gl_rows(company: str, upto: object = None) -> list[dict]:
     """Posted GL entries joined to their account's classification.
 
@@ -288,6 +299,24 @@ def tds_payable_rows(company: str, upto: object = None) -> list[dict]:
     if not account:
         return []
     return [row for row in gl_rows(company, upto=upto) if row["account"] == account]
+
+
+def grant_liability_account(company: str) -> str | None:
+    """Configured grant liability account for a company, or None.
+
+    Unlike `get_company_accounts()`, this does not throw when the company has no
+    Trust Compliance Settings row at all - callers here are read-only reports
+    tagging GL rows for classification, not the donation posting path that
+    requires the account to exist.
+    """
+    from trust_compliance.trust_compliance.doctype.trust_compliance_settings.trust_compliance_settings import (
+        get_company_accounts,
+    )
+
+    try:
+        return get_company_accounts(company).get("grant_liability_account")
+    except frappe.ValidationError:
+        return None
 
 
 def inter_unit_gl_rows(companies: list[str], from_date=None, to_date=None) -> list[dict]:

@@ -16,6 +16,7 @@ from trust_compliance.core.fund_balance import build_fund_income_expenditure
 def execute(filters: dict | None = None):
     filters = filters or {}
     company = filters["company"]
+    queries.require_company_read_permission(company)
     from_date, to_date = queries.window_for(filters)
 
     report = build_fund_income_expenditure(
