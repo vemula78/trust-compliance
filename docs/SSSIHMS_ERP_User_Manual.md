@@ -282,11 +282,23 @@ the linked PM Schedule's due date forward automatically.
   Warranty.
 - Start Date **(required)**, End Date **(required)**.
 - Supplier, Visits Included, Value, SLA Response (Hours) — optional.
+- **Confirmed broken (18-Aug-2026 retest) — do not use.** Saving throws a
+  server error: `SQL functions are not allowed as strings in SELECT:
+  MAX(end_date)`. The controller updates the linked Asset's
+  `hem_amc_cmc_expiry` by recomputing the latest end date across every
+  non-cancelled contract for that asset, and the query it uses (a raw
+  `MAX(end_date)` string) is rejected by this Frappe version's SQL-safety
+  check. No contract can be saved against any asset until this is fixed in
+  code — this is not a data or permissions issue.
 
 **Capital Purchase Requisition (CPR)** — the capital-equipment purchase
 request and its approval trail.
-- Raised By — **filled automatically as the logged-in user; you cannot set
-  or change this**, even by editing after saving.
+- Raised By **(required)** — **correction, 18-Aug-2026 retest**: on the
+  desk "New" form this is an ordinary editable User-link field, not
+  auto-filled — leaving it blank blocks saving with "Raised By is
+  required." Whoever raises the CPR must pick themselves (or whoever it's
+  genuinely being raised on behalf of) here; it is not stamped
+  automatically the way Raised By's own field description implies.
 - Department **(required)**, Title **(required)**, Estimated Value
   **(required)**.
 - Justification — free text, recommended.
@@ -321,6 +333,21 @@ permitted Section 11(5)/Rule 17C investment clauses), and **Trust Company
 Account** (maps each Company to its GL accounts — donation income, corpus
 fund, FCRA bank account, TDS, etc. — used automatically by the posting logic
 below; get this right before recording any donation).
+
+**Confirmed 18-Aug-2026 — three workflows below hard-fail at Submit if their
+GL mapping is missing, with a clear "Setup Incomplete" message, not a silent
+or confusing error:**
+- A **Grant** donation needs a **Grant Liability Account** set on Trust
+  Company Account for that Company.
+- **Fund Transfer** needs an **inter-fund transfer (equity clearing)
+  account** set on Trust Company Account for that Company.
+- **Trust Investment** needs at least one **Investment-type asset account**
+  to exist in that Company's chart of accounts (the Investment Account
+  field otherwise has nothing valid to pick).
+A newly stood-up Company (a fresh campus, or a smoke-test company) will not
+have these until an Accounts Manager sets them up — this is expected, not a
+bug; the fix is completing that Company's Trust Company Account record and
+chart of accounts before these three workflows are used against it.
 
 **Trust Donation** — submittable.
 - Donor **(required)**, Company **(required)**, Donation Date **(required)**.
@@ -774,3 +801,42 @@ day=0/Monday — `sssihms_hr`, commit `e7d63e7`); everything else tested
 correctly, with three genuine gotchas folded into the sections above
 (fixed-asset items on invoices, Appointment Type default duration, LMS
 Instructors field timing) rather than kept as a separate findings list.
+
+### Second retest pass, same day — 25 additional workflows
+
+A second round covered every remaining sssihms_hr doctype (Shift Swap
+Request, Staff Document, Performance Review, Career Action, Learning Plan,
+Relation Case, Onboarding Task, Separation Case, Recruitment Requisition,
+Candidate, Asset Assignment), the rest of Facility Management/BMW (Trade,
+CPR, BMW Handover, BMW Accident, BMW Bed-Day Record), and most of Trust
+Compliance (Trust Donation with Grant flag, Fund Transfer, Property Tax
+Schedule, Property Maintenance, Form 10 Accumulation). Two corrections and
+one confirmed live defect came out of it, both folded into the relevant
+sections above rather than kept here:
+
+- **AMC / CMC Warranty Contract cannot currently be saved at all** — a
+  server-side SQL error (§2.2). This is a genuine, reproducible code defect,
+  not a data or config problem.
+- **Capital Purchase Requisition's Raised By field is not auto-filled** on
+  the desk form, contradicting the manual's earlier claim — corrected in
+  §2.2.
+- Grant Utilisation, Fund Transfer, and Trust Investment all correctly
+  **refuse to submit with a clear "Setup Incomplete" message** when a test
+  company's GL mapping is missing (§3) — confirmed working as designed, not
+  a defect, but worth knowing before assuming a workflow is broken.
+- Staff Performance Review's "locked once Closed" rule (§1.6) was
+  specifically retested and **confirmed accurate** — a same-session,
+  premature retraction of that finding was itself wrong (a dialog-timing
+  artifact, not evidence the lock doesn't work).
+- Several sssihms_hr field descriptions (e.g. on Staff Performance Review,
+  Staff Career Action) still show internal porting/dev commentary referring
+  to the old FastAPI/React source (`CareerPage.tsx`, "the source's...")
+  rather than user-facing help text — cosmetic, worth a cleanup pass, not
+  functionally broken.
+
+Twelve workflows were not reached in this pass (Inter Unit Transfer, Patient
+Follow-Up Register, Payment Collection, Journal Entry, Payroll Entry,
+Attendance, Expense Claim, lab order/results, Insights, and four of Buzz's
+event-lifecycle steps plus Education fees and LMS lessons/learner) — treat
+those as still unverified against the live system rather than assume they
+work because everything else did.
