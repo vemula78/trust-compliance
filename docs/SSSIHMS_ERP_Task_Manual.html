@@ -5,8 +5,10 @@ body{font-family:-apple-system,Segoe UI,Helvetica,Arial,sans-serif;max-width:980
 header{margin-bottom:24px;border-bottom:2px solid #333;padding-bottom:14px}
 h1{margin:0 0 6px}
 header p{color:#444}
-nav{background:#fff;border:1px solid #ddd;border-radius:8px;padding:14px 18px;margin-bottom:32px;columns:2;column-gap:24px}
-nav a{display:block;margin:4px 0;font-size:14px;break-inside:avoid}
+nav{background:#fff;border:1px solid #ddd;border-radius:8px;padding:14px 18px;margin-bottom:32px;columns:2;column-gap:28px}
+.nav-group{break-inside:avoid;margin-bottom:14px}
+.nav-group h3{font-size:13px;text-transform:uppercase;letter-spacing:.03em;color:#888;margin:0 0 4px}
+nav a{display:block;margin:2px 0;font-size:14px}
 section{margin-bottom:44px;background:#fff;border:1px solid #ddd;border-radius:10px;padding:20px 24px}
 .module-tag{display:inline-block;font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:#666;background:#eee;border-radius:4px;padding:3px 8px;margin-bottom:8px}
 h2{margin:0 0 6px}
@@ -14,15 +16,16 @@ h2{margin:0 0 6px}
 ol{padding-left:22px}
 ol li{margin-bottom:6px}
 .watch{background:#fff8e6;border:1px solid #f0dca0;border-radius:6px;padding:10px 14px;margin:14px 0;font-size:14px}
+.no-shot{color:#888;font-size:13px;font-style:italic;margin-top:14px}
 .shots{margin-top:16px;display:flex;flex-wrap:wrap;gap:12px}
 .shot{flex:1 1 220px;max-width:260px}
 .shot img{width:100%;border:1px solid #eee;border-radius:6px;display:block}
 </style></head><body>
 <header>
 <h1>SSSIHMS ERP — Task Manual</h1>
-<p>Step-by-step instructions for the tasks staff actually do, each illustrated with real screenshots from the 18-Aug-2026 end-to-end testing session in the <strong>Sai Hospital Smoke</strong> company. Organized by task, not by module — find what you're trying to do, not a form name. For the full field-by-field reference, see the companion <a href="SSSIHMS_ERP_User_Manual.md">User Manual</a>.</p>
+<p>Step-by-step instructions for 60 real ERP workflows across every module (HR, Facility Management &amp; BMW, Trust/FCRA Compliance, Patient Ticketing, Patient Follow-Up, Sai Sparsh, Accounting, HRMS, Healthcare, Insights, Buzz, Education, LMS). 23 are illustrated with real screenshots from the 18-Aug-2026 end-to-end testing session in the <strong>Sai Hospital Smoke</strong> company; the rest are steps only, drawn from the live DocType configuration, where that session didn't happen to exercise the workflow — each says so rather than reusing an unrelated image. Organized by task, not by module — find what you're trying to do. For the full field-by-field reference, see the companion <a href="SSSIHMS_ERP_User_Manual.md">User Manual</a>.</p>
 </header>
-<nav><a href="#roster">Set up a Ward and assign a Roster</a><a href="#credential">Log and verify a Staff Credential</a><a href="#sales-invoice">Raise a Sales Invoice</a><a href="#purchase-invoice">Raise a Purchase Invoice</a><a href="#employee">Create an Employee record</a><a href="#leave">Apply for and approve Leave</a><a href="#asset-pm">Register an Asset and its Preventive Maintenance schedule</a><a href="#breakdown">Log a Breakdown Repair Ticket</a><a href="#bmw">Log Biomedical Waste (BMW) generation</a><a href="#donation">Record a Trust Donation</a><a href="#appointment">Book a Patient Appointment</a><a href="#patient-ticket">Submit and handle a Patient Ticket</a><a href="#sparsh">Log a Sai Sparsh visit and follow-up call</a><a href="#buzz-event">Create and publish a Buzz Event</a><a href="#student">Admit a Student</a><a href="#lms-course">Create and publish an LMS Course</a></nav>
+<nav><div class="nav-group"><h3>HR (sssihms_hr)</h3><a href="#roster">Set up a Ward and assign a Roster</a><a href="#shift-swap">Request and approve a Shift Swap</a><a href="#credential">Log and verify a Staff Credential</a><a href="#staff-document">Attach a Staff Document</a><a href="#performance-review">Run a Staff Performance Review</a><a href="#career-action">Record a Staff Career Action</a><a href="#learning-plan">Assign a Staff Learning Plan</a><a href="#relation-case">Open a Staff Relation Case</a><a href="#onboarding-task">Track a Staff Onboarding Task</a><a href="#separation-case">Process a Staff Separation Case</a><a href="#recruitment">Raise a Recruitment Requisition and take a Candidate through Stages</a><a href="#asset-assignment">Issue a Staff Asset Assignment</a></div><div class="nav-group"><h3>Facility &amp; Equipment Management</h3><a href="#trade-setup">Set up Trade and Asset Class reference lists</a><a href="#asset-pm">Register an Asset and its Preventive Maintenance schedule</a><a href="#breakdown">Log a Breakdown Repair Ticket</a><a href="#amc-contract">Record an AMC / CMC / Warranty Contract</a><a href="#capital-purchase">Raise a Capital Purchase Requisition (CPR)</a></div><div class="nav-group"><h3>Facility &amp; Equipment Management — BMW</h3><a href="#bmw-bag">Log Biomedical Waste (BMW) generation</a><a href="#bmw-handover">Hand waste bags over to the disposal contractor</a><a href="#bmw-accident">Log a BMW Accident (spill / needle-stick / handling incident)</a><a href="#bmw-bedday">Enter the monthly Bed-Day figure for BMW reporting</a></div><div class="nav-group"><h3>Trust &amp; FCRA Compliance</h3><a href="#donation">Record a Trust Donation</a><a href="#grant-utilisation">Record Grant Utilisation</a><a href="#fund-transfer">Transfer money between two Funds</a><a href="#inter-unit-transfer">Record an Inter Unit Transfer</a><a href="#trust-investment">Record a Trust Investment and its later Transactions</a><a href="#trust-property">Register a Trust Property</a><a href="#property-tax">Raise and pay a Property Tax Schedule</a><a href="#property-maintenance">Log Property Maintenance work</a><a href="#form10">File a Form 10 Accumulation</a></div><div class="nav-group"><h3>Patient Ticketing</h3><a href="#patient-ticket">Submit and handle a Patient Ticket</a><a href="#ticket-settings">Configure Patient Ticket Settings</a></div><div class="nav-group"><h3>Patient Follow-Up Register</h3><a href="#patient-followup">Log a volunteer Patient Follow-Up call</a></div><div class="nav-group"><h3>Sai Sparsh</h3><a href="#sparsh">Log a Sai Sparsh visit and follow-up call</a></div><div class="nav-group"><h3>Accounting / ERPNext core</h3><a href="#sales-invoice">Raise a Sales Invoice</a><a href="#collect-payment">Collect payment against a Sales Invoice</a><a href="#purchase-invoice">Raise a Purchase Invoice</a><a href="#journal-entry">Post a manual Journal Entry</a><a href="#gl-reports">View Trial Balance / P&amp;L / Balance Sheet / General Ledger</a></div><div class="nav-group"><h3>HRMS (Frappe HR)</h3><a href="#employee">Create an Employee record</a><a href="#leave">Apply for and approve Leave</a><a href="#leave-allocation">Allocate Leave to an employee</a><a href="#payroll">Run Payroll</a><a href="#attendance">Mark attendance / check in-out</a><a href="#expense-claim">Submit an Expense Claim</a></div><div class="nav-group"><h3>Healthcare</h3><a href="#appointment">Book a Patient Appointment</a><a href="#encounter">Record a consultation (Patient Encounter)</a><a href="#lab-test">Order a lab test and record results</a></div><div class="nav-group"><h3>Insights</h3><a href="#insights">Build a query, chart and dashboard</a></div><div class="nav-group"><h3>Buzz — Event Management</h3><a href="#buzz-event">Create and publish a Buzz Event</a><a href="#buzz-tickets">Set up ticket types and take a booking</a><a href="#buzz-checkin">Check in an attendee on the day</a><a href="#buzz-speaker">Handle a speaker Talk Proposal</a><a href="#buzz-sponsor">Handle a Sponsorship Enquiry</a><a href="#buzz-feedback">Collect Event Feedback</a></div><div class="nav-group"><h3>Education</h3><a href="#student">Admit a Student</a><a href="#fee-structure">Set up and collect Fees</a></div><div class="nav-group"><h3>LMS (Frappe Learning)</h3><a href="#lms-course">Create and publish an LMS Course</a><a href="#lms-lessons">Add chapters and lessons to a Course</a><a href="#lms-learner">Take a course as a learner</a></div></nav>
 <main>
 
 <section id="roster">
@@ -33,6 +36,14 @@ ol li{margin-bottom:6px}
   <div class="watch"><strong>Watch out for:</strong> Day = 0 (Monday) used to be silently rejected by a bug in sssihms_hr — fixed in production (commit e7d63e7). If a Monday roster row still refuses to save, that fix hasn&#x27;t reached this site yet.</div>
   <div class="shots"><div class="shot"><img src="screenshots/shot_0147.jpg" loading="lazy" alt="Set up a Ward and assign a Roster step"></div><div class="shot"><img src="screenshots/shot_0150.jpg" loading="lazy" alt="Set up a Ward and assign a Roster step"></div><div class="shot"><img src="screenshots/shot_0168.jpg" loading="lazy" alt="Set up a Ward and assign a Roster step"></div><div class="shot"><img src="screenshots/shot_0176.jpg" loading="lazy" alt="Set up a Ward and assign a Roster step"></div><div class="shot"><img src="screenshots/shot_0182.jpg" loading="lazy" alt="Set up a Ward and assign a Roster step"></div></div>
 </section>
+<section id="shift-swap">
+  <div class="module-tag">HR (sssihms_hr)</div>
+  <h2>Request and approve a Shift Swap</h2>
+  <p class="goal">Let an employee hand a shift to a colleague, with HR sign-off.</p>
+  <ol><li>Employee: Shift Swap Request → New. Pick yourself as From Employee (the system only lets a logged-in Employee submit a swap where they are the From Employee — picking someone else is rejected) and the colleague as To Employee.</li><li>Fill Ward, Day of Month (rejected if out of range, e.g. 0 or above 31) and Shift (M/E/N/G).</li><li>Add a Reason (optional), save with Status = Pending.</li><li>HR Manager/User reviews it, sets Staffing Risk (Low/Medium/High), and changes Status to Approved or Rejected.</li></ol>
+  
+  <div class="no-shot">No screenshot from the 18-Aug-2026 testing session covers this workflow — steps are drawn from the DocType configuration, not illustrated.</div>
+</section>
 <section id="credential">
   <div class="module-tag">HR (sssihms_hr)</div>
   <h2>Log and verify a Staff Credential</h2>
@@ -41,37 +52,85 @@ ol li{margin-bottom:6px}
   <div class="watch"><strong>Watch out for:</strong> A plain edit can never set Status to active — only the Verify action can. This is deliberate, so activation is always attributable to whoever ran it.</div>
   <div class="shots"><div class="shot"><img src="screenshots/shot_0119.jpg" loading="lazy" alt="Log and verify a Staff Credential step"></div><div class="shot"><img src="screenshots/shot_0123.jpg" loading="lazy" alt="Log and verify a Staff Credential step"></div><div class="shot"><img src="screenshots/shot_0126.jpg" loading="lazy" alt="Log and verify a Staff Credential step"></div><div class="shot"><img src="screenshots/shot_0127.jpg" loading="lazy" alt="Log and verify a Staff Credential step"></div></div>
 </section>
-<section id="sales-invoice">
-  <div class="module-tag">Accounting / ERPNext core</div>
-  <h2>Raise a Sales Invoice</h2>
-  <p class="goal">Bill a customer and post the GL entry in one step.</p>
-  <ol><li>Accounts → Sales Invoice → New. Pick the Company and Customer — billing address and currency fill in automatically.</li><li>Add item rows with quantity and rate. Tax rows are pulled in automatically but can be adjusted.</li><li>If the sale also moves stock and there&#x27;s no separate Delivery Note, tick Update Stock so one document covers both.</li><li>Save, then Submit. Submitting is what posts the GL entry — receivable, income and tax accounts update together; there&#x27;s no separate “post to ledger” step.</li></ol>
-  <div class="watch"><strong>Watch out for:</strong> An Item flagged Is Fixed Asset (e.g. a cath lab monitor tracked as a depreciable asset) is rejected on a Sales Invoice line unless you pick the specific Asset record it&#x27;s billing against. For a normal sale, use an ordinary (non-fixed-asset) Item instead.</div>
-  <div class="shots"><div class="shot"><img src="screenshots/shot_0044.jpg" loading="lazy" alt="Raise a Sales Invoice step"></div><div class="shot"><img src="screenshots/shot_0051.jpg" loading="lazy" alt="Raise a Sales Invoice step"></div><div class="shot"><img src="screenshots/shot_0064.jpg" loading="lazy" alt="Raise a Sales Invoice step"></div><div class="shot"><img src="screenshots/shot_0083.jpg" loading="lazy" alt="Raise a Sales Invoice step"></div></div>
+<section id="staff-document">
+  <div class="module-tag">HR (sssihms_hr)</div>
+  <h2>Attach a Staff Document</h2>
+  <p class="goal">File a private document (ID proof, contract) against an employee.</p>
+  <ol><li>Staff Document → New. Pick Employee, type a Category (free text, e.g. “ID Proof”), attach the File (all required).</li><li>Set Verification Status (pending/verified/rejected) and save.</li><li>To replace an outdated document, upload a new Staff Document with the same Category and link it via Supersedes — do not edit the old one in place.</li></ol>
+  <div class="watch"><strong>Watch out for:</strong> The file is always stored privately, whatever attach method you use — there&#x27;s no way to make it public from this form.</div>
+  <div class="no-shot">No screenshot from the 18-Aug-2026 testing session covers this workflow — steps are drawn from the DocType configuration, not illustrated.</div>
 </section>
-<section id="purchase-invoice">
-  <div class="module-tag">Accounting / ERPNext core</div>
-  <h2>Raise a Purchase Invoice</h2>
-  <p class="goal">Record a supplier bill.</p>
-  <ol><li>Accounts → Purchase Invoice → New. Pick Supplier.</li><li>Add item or expense rows.</li><li>Save, then Submit.</li></ol>
+<section id="performance-review">
+  <div class="module-tag">HR (sssihms_hr)</div>
+  <h2>Run a Staff Performance Review</h2>
+  <p class="goal">Take an employee through a review cycle.</p>
+  <ol><li>Staff Performance Review → New. Pick Employee, Cycle (e.g. “2026-H2”), Reviewer, Score and Potential (Developing/Meets/High).</li><li>Start Status at Self Review, then move it forward — Manager Review → Calibration → Closed — as the cycle progresses.</li></ol>
+  <div class="watch"><strong>Watch out for:</strong> Once Status is Closed, Score and Reviewer can no longer be changed by a plain edit — a genuine correction needs the record re-opened, not a direct edit.</div>
+  <div class="no-shot">No screenshot from the 18-Aug-2026 testing session covers this workflow — steps are drawn from the DocType configuration, not illustrated.</div>
+</section>
+<section id="career-action">
+  <div class="module-tag">HR (sssihms_hr)</div>
+  <h2>Record a Staff Career Action</h2>
+  <p class="goal">Log a promotion, transfer, increment or confirmation.</p>
+  <ol><li>Staff Career Action → New. Pick Employee and Type (Promotion/Transfer/Increment/Confirmation).</li><li>Fill From and To (free text describing the change, e.g. From “Staff Nurse” To “Senior Staff Nurse”), Effective Date and Approver.</li><li>Save as Draft, then move Status through Pending Approval → Approved (or Rejected) as it&#x27;s actioned.</li></ol>
   
-  <div class="shots"><div class="shot"><img src="screenshots/shot_0256.jpg" loading="lazy" alt="Raise a Purchase Invoice step"></div><div class="shot"><img src="screenshots/shot_0259.jpg" loading="lazy" alt="Raise a Purchase Invoice step"></div><div class="shot"><img src="screenshots/shot_0263.jpg" loading="lazy" alt="Raise a Purchase Invoice step"></div><div class="shot"><img src="screenshots/shot_0264.jpg" loading="lazy" alt="Raise a Purchase Invoice step"></div></div>
+  <div class="no-shot">No screenshot from the 18-Aug-2026 testing session covers this workflow — steps are drawn from the DocType configuration, not illustrated.</div>
 </section>
-<section id="employee">
-  <div class="module-tag">HRMS (Frappe HR)</div>
-  <h2>Create an Employee record</h2>
-  <p class="goal">Onboard a new staff member into HRMS.</p>
-  <ol><li>HR → Employee → New. Fill the required identity fields (name, date of joining, department, designation).</li><li>Save — this is the master record everything else (leave, payroll, roster) links against.</li></ol>
+<section id="learning-plan">
+  <div class="module-tag">HR (sssihms_hr)</div>
+  <h2>Assign a Staff Learning Plan</h2>
+  <p class="goal">Track a mandatory or clinical training item to completion.</p>
+  <ol><li>Staff Learning Plan → New. Pick Employee, Course, Category (Mandatory/Clinical/Safety/Leadership/Technical) and Due Date.</li><li>Move Status forward — Not Started → In Progress → Complete — or Overdue if it lapses.</li></ol>
   
-  <div class="shots"><div class="shot"><img src="screenshots/shot_0086.jpg" loading="lazy" alt="Create an Employee record step"></div><div class="shot"><img src="screenshots/shot_0090.jpg" loading="lazy" alt="Create an Employee record step"></div><div class="shot"><img src="screenshots/shot_0092.jpg" loading="lazy" alt="Create an Employee record step"></div></div>
+  <div class="no-shot">No screenshot from the 18-Aug-2026 testing session covers this workflow — steps are drawn from the DocType configuration, not illustrated.</div>
 </section>
-<section id="leave">
-  <div class="module-tag">HRMS (Frappe HR)</div>
-  <h2>Apply for and approve Leave</h2>
-  <p class="goal">Submit a leave request and have it approved.</p>
-  <ol><li>HR → Leave Application → New. The form shows your current Allocated Leaves for reference.</li><li>Pick the Leave Type and From/To dates. Save — there&#x27;s no separate Submit step for the employee; saving changes the status to Open and emails your Leave Approver.</li><li>As the Approver: you get an email when an application is saved; from the record, Approve, Reject or Cancel it — it&#x27;s the Approver, not the employee, who does the final Submit.</li></ol>
-  <div class="watch"><strong>Watch out for:</strong> A leave application can&#x27;t span two different leave-allocation periods (split it into two applications), and it can&#x27;t be submitted once payroll has already been processed for that period.</div>
-  <div class="shots"><div class="shot"><img src="screenshots/shot_0385.jpg" loading="lazy" alt="Apply for and approve Leave step"></div><div class="shot"><img src="screenshots/shot_0386.jpg" loading="lazy" alt="Apply for and approve Leave step"></div><div class="shot"><img src="screenshots/shot_0387.jpg" loading="lazy" alt="Apply for and approve Leave step"></div></div>
+<section id="relation-case">
+  <div class="module-tag">HR (sssihms_hr)</div>
+  <h2>Open a Staff Relation Case</h2>
+  <p class="goal">Log a grievance, disciplinary, counselling or appreciation case.</p>
+  <ol><li>Staff Relation Case → New. Pick Employee and Type (Grievance/Disciplinary/Counselling/Appreciation), write a Summary, and name a Case Owner.</li><li>Set Risk (Low/Medium/High).</li><li>Move Status Open → Under Review → Resolved, filling Resolved On once it&#x27;s closed.</li></ol>
+  <div class="watch"><strong>Watch out for:</strong> This doctype is deliberately withheld from the Employee role — the person the case concerns cannot read it.</div>
+  <div class="no-shot">No screenshot from the 18-Aug-2026 testing session covers this workflow — steps are drawn from the DocType configuration, not illustrated.</div>
+</section>
+<section id="onboarding-task">
+  <div class="module-tag">HR (sssihms_hr)</div>
+  <h2>Track a Staff Onboarding Task</h2>
+  <p class="goal">Check off one item in a new hire&#x27;s onboarding checklist.</p>
+  <ol><li>Staff Onboarding Task → New. Pick Employee, describe the Task (e.g. “ID badge issued”), and set Owner (HR/IT/Department/Employee) and Due Date.</li><li>Move Status Pending → Complete (or Blocked), filling Completed On once done.</li></ol>
+  
+  <div class="no-shot">No screenshot from the 18-Aug-2026 testing session covers this workflow — steps are drawn from the DocType configuration, not illustrated.</div>
+</section>
+<section id="separation-case">
+  <div class="module-tag">HR (sssihms_hr)</div>
+  <h2>Process a Staff Separation Case</h2>
+  <p class="goal">Take an employee&#x27;s exit through clearance to closure.</p>
+  <ol><li>Staff Separation Case → New. Pick Employee, Type (Resignation/Retirement/Contract End/Termination) and Last Working Day.</li><li>Track Clearance (Not Started → In Progress → Complete) and Final Settlement (Pending → Ready → Released) as they progress.</li><li>Move Status Open → Approved → Closed once everything is done.</li></ol>
+  
+  <div class="no-shot">No screenshot from the 18-Aug-2026 testing session covers this workflow — steps are drawn from the DocType configuration, not illustrated.</div>
+</section>
+<section id="recruitment">
+  <div class="module-tag">HR (sssihms_hr)</div>
+  <h2>Raise a Recruitment Requisition and take a Candidate through Stages</h2>
+  <p class="goal">Open a vacancy and move an applicant to joining.</p>
+  <ol><li>Staff Recruitment Requisition → New. Fill Role, Department, Openings (number of vacancies), Priority (Routine/Soon/Urgent) and Requested By.</li><li>Move Status Draft → Approved → Interviewing → Offer Released as it progresses.</li><li>For each applicant: Staff Candidate → New. Fill Candidate Name, Role Applied For, Source (Referral/Job Portal/Walk-in/Agency), Rating and Owner.</li><li>Move Stage forward — Screening → Interview → Credential Check → Offer → Joined — as the candidate progresses.</li></ol>
+  
+  <div class="no-shot">No screenshot from the 18-Aug-2026 testing session covers this workflow — steps are drawn from the DocType configuration, not illustrated.</div>
+</section>
+<section id="asset-assignment">
+  <div class="module-tag">HR (sssihms_hr)</div>
+  <h2>Issue a Staff Asset Assignment</h2>
+  <p class="goal">Track an ID card, laptop, uniform or key issued to an employee.</p>
+  <ol><li>Staff Asset Assignment → New. Pick Employee, describe the Asset, and set Issued On.</li><li>Move Status Issued → Return Due → Returned, filling Return Due / Returned On as the item moves through its lifecycle.</li></ol>
+  <div class="watch"><strong>Watch out for:</strong> This is not ERPNext&#x27;s own Asset doctype (which is for depreciable fixed assets) — it&#x27;s a lighter personnel-item tracker at the right grain for ID cards and uniforms.</div>
+  <div class="no-shot">No screenshot from the 18-Aug-2026 testing session covers this workflow — steps are drawn from the DocType configuration, not illustrated.</div>
+</section>
+<section id="trade-setup">
+  <div class="module-tag">Facility &amp; Equipment Management</div>
+  <h2>Set up Trade and Asset Class reference lists</h2>
+  <p class="goal">One-time setup so PM Schedules and repair tickets can pick a trade/category.</p>
+  <ol><li>Facility Management → Trade → New. Name the trade (e.g. Electrical, Mechanical, Biomedical) and save.</li><li>Facility Management → Asset Class → New. Name the equipment category and pick its default Trade.</li></ol>
+  
+  <div class="shots"><div class="shot"><img src="screenshots/shot_0130.jpg" loading="lazy" alt="Set up Trade and Asset Class reference lists step"></div><div class="shot"><img src="screenshots/shot_0133.jpg" loading="lazy" alt="Set up Trade and Asset Class reference lists step"></div><div class="shot"><img src="screenshots/shot_0137.jpg" loading="lazy" alt="Set up Trade and Asset Class reference lists step"></div></div>
 </section>
 <section id="asset-pm">
   <div class="module-tag">Facility &amp; Equipment Management</div>
@@ -89,13 +148,53 @@ ol li{margin-bottom:6px}
   
   <div class="shots"><div class="shot"><img src="screenshots/shot_0129.jpg" loading="lazy" alt="Log a Breakdown Repair Ticket step"></div><div class="shot"><img src="screenshots/shot_0274.jpg" loading="lazy" alt="Log a Breakdown Repair Ticket step"></div><div class="shot"><img src="screenshots/shot_0275.jpg" loading="lazy" alt="Log a Breakdown Repair Ticket step"></div></div>
 </section>
-<section id="bmw">
+<section id="amc-contract">
   <div class="module-tag">Facility &amp; Equipment Management</div>
+  <h2>Record an AMC / CMC / Warranty Contract</h2>
+  <p class="goal">Track a service contract against an asset.</p>
+  <ol><li>AMC / CMC Warranty Contract → New. Pick Asset, Contract Type (AMC/CMC/Warranty), Start Date and End Date (all required).</li><li>Fill Supplier, Visits Included, Value and SLA Response (Hours) if known, then Submit.</li></ol>
+  
+  <div class="no-shot">No screenshot from the 18-Aug-2026 testing session covers this workflow — steps are drawn from the DocType configuration, not illustrated.</div>
+</section>
+<section id="capital-purchase">
+  <div class="module-tag">Facility &amp; Equipment Management</div>
+  <h2>Raise a Capital Purchase Requisition (CPR)</h2>
+  <p class="goal">Get a capital-equipment purchase approved through its full trail.</p>
+  <ol><li>Capital Purchase Requisition → New. Fill Department, Title, Estimated Value (all required) and a Justification. Raised By fills in automatically as the logged-in user — you cannot set or change it.</li><li>Optionally link the Asset or Breakdown Repair Ticket that triggered the request.</li><li>Save as Draft, then use the record&#x27;s own action menu (Submit for Approval) — never edit Status or Current Step directly.</li><li>The Director/approver at each step uses the matching action (Approve, Return, Reject, Withdraw) to move it forward; every step writes its own row into Transition History automatically.</li></ol>
+  <div class="watch"><strong>Watch out for:</strong> Status, Current Step and Transition History cannot be altered by a plain save — only the action-menu commands write them. This is what keeps the approval trail unforgeable.</div>
+  <div class="no-shot">No screenshot from the 18-Aug-2026 testing session covers this workflow — steps are drawn from the DocType configuration, not illustrated.</div>
+</section>
+<section id="bmw-bag">
+  <div class="module-tag">Facility &amp; Equipment Management — BMW</div>
   <h2>Log Biomedical Waste (BMW) generation</h2>
   <p class="goal">Record a bag of waste generated by a department, ready for handover.</p>
   <ol><li>Set up the generating department once: Facility Management → BMW Department → New — name, short Code, optional link to the HR Department.</li><li>Each time a bag is generated: BMW Bag → New. Fill Bag No, Department, Category (Yellow/Red/White/Blue — the standard colour-coding), Weight (kg) and Generated At.</li><li>If a bag was logged in error, set Status to Void with a Void Reason — do not delete it.</li></ol>
   <div class="watch"><strong>Watch out for:</strong> Is Cytotoxic only appears/matters when Category = Yellow.</div>
   <div class="shots"><div class="shot"><img src="screenshots/shot_0197.jpg" loading="lazy" alt="Log Biomedical Waste (BMW) generation step"></div><div class="shot"><img src="screenshots/shot_0200.jpg" loading="lazy" alt="Log Biomedical Waste (BMW) generation step"></div><div class="shot"><img src="screenshots/shot_0203.jpg" loading="lazy" alt="Log Biomedical Waste (BMW) generation step"></div><div class="shot"><img src="screenshots/shot_0215.jpg" loading="lazy" alt="Log Biomedical Waste (BMW) generation step"></div></div>
+</section>
+<section id="bmw-handover">
+  <div class="module-tag">Facility &amp; Equipment Management — BMW</div>
+  <h2>Hand waste bags over to the disposal contractor</h2>
+  <p class="goal">Close out a batch of BMW Bags against the contractor&#x27;s manifest.</p>
+  <ol><li>BMW Handover → New (auto-numbered BMW-HO-YYYY-####). Fill Handover At and Manifest No (the contractor&#x27;s reference), plus Vehicle No / Receiver Name if known.</li><li>In the Bags table, add every BMW Bag being handed over — the Yellow/Red/White/Blue/Cytotoxic weight totals below are calculated from the rows, don&#x27;t type them by hand.</li><li>Check the calculated weights, then Submit — this is a submittable record; amend it afterwards to correct.</li></ol>
+  
+  <div class="no-shot">No screenshot from the 18-Aug-2026 testing session covers this workflow — steps are drawn from the DocType configuration, not illustrated.</div>
+</section>
+<section id="bmw-accident">
+  <div class="module-tag">Facility &amp; Equipment Management — BMW</div>
+  <h2>Log a BMW Accident (spill / needle-stick / handling incident)</h2>
+  <p class="goal">Record and, if major, statutorily report a waste-handling accident.</p>
+  <ol><li>BMW Accident → New. Fill Occurred At and Accident Type (short free text), tick Is Major if it meets the facility&#x27;s major-incident definition.</li><li>Fill Sequence of Events, Impact Assessment, Emergency Measures, Remedial Action and Prevention Steps as they become known — these can be added to before submission.</li><li>For a major incident: tick Authority Informed and set Authority Informed At once the pollution control board has been notified — this is a statutory requirement.</li><li>Submit.</li></ol>
+  
+  <div class="no-shot">No screenshot from the 18-Aug-2026 testing session covers this workflow — steps are drawn from the DocType configuration, not illustrated.</div>
+</section>
+<section id="bmw-bedday">
+  <div class="module-tag">Facility &amp; Equipment Management — BMW</div>
+  <h2>Enter the monthly Bed-Day figure for BMW reporting</h2>
+  <p class="goal">Feed the statutory per-bed waste-generation-rate calculation.</p>
+  <ol><li>BMW Bed-Day Record → New. Pick Year and Month, enter Occupied Bed Days, and save.</li></ol>
+  
+  <div class="no-shot">No screenshot from the 18-Aug-2026 testing session covers this workflow — steps are drawn from the DocType configuration, not illustrated.</div>
 </section>
 <section id="donation">
   <div class="module-tag">Trust &amp; FCRA Compliance</div>
@@ -105,13 +204,69 @@ ol li{margin-bottom:6px}
   <div class="watch"><strong>Watch out for:</strong> Get the Trust Company Account mapping (donation income, corpus fund, FCRA bank account, TDS) right before recording any donation — the posting logic uses it automatically and won&#x27;t ask again mid-entry.</div>
   <div class="shots"><div class="shot"><img src="screenshots/shot_0276.jpg" loading="lazy" alt="Record a Trust Donation step"></div><div class="shot"><img src="screenshots/shot_0280.jpg" loading="lazy" alt="Record a Trust Donation step"></div><div class="shot"><img src="screenshots/shot_0283.jpg" loading="lazy" alt="Record a Trust Donation step"></div><div class="shot"><img src="screenshots/shot_0287.jpg" loading="lazy" alt="Record a Trust Donation step"></div><div class="shot"><img src="screenshots/shot_0288.jpg" loading="lazy" alt="Record a Trust Donation step"></div></div>
 </section>
-<section id="appointment">
-  <div class="module-tag">Healthcare</div>
-  <h2>Book a Patient Appointment</h2>
-  <p class="goal">Schedule a patient&#x27;s visit to a practitioner.</p>
-  <ol><li>If the patient is new: Healthcare → Patient → New, then save.</li><li>Healthcare → Patient Appointment → New. Pick the Medical Department, Practitioner and date — available slots for that practitioner are pulled from their schedule and shown with status indicators, so you pick an open slot rather than typing a time blind.</li><li>Save. The appointment&#x27;s own status then moves itself: Scheduled → Open (on the day) → Closed (once an Encounter or Clinical Procedure exists against it) — or Cancelled.</li></ol>
-  <div class="watch"><strong>Watch out for:</strong> If an Appointment Type&#x27;s own Default Duration is left blank/zero, any appointment booked against it keeps resetting its Duration to 0 whenever the Appointment Type field is touched — which then blocks saving with “Appointment end must be after start.” Fix this once, at the Appointment Type record, not per appointment.</div>
-  <div class="shots"><div class="shot"><img src="screenshots/shot_0313.jpg" loading="lazy" alt="Book a Patient Appointment step"></div><div class="shot"><img src="screenshots/shot_0315.jpg" loading="lazy" alt="Book a Patient Appointment step"></div><div class="shot"><img src="screenshots/shot_0316.jpg" loading="lazy" alt="Book a Patient Appointment step"></div><div class="shot"><img src="screenshots/shot_0322.jpg" loading="lazy" alt="Book a Patient Appointment step"></div><div class="shot"><img src="screenshots/shot_0330.jpg" loading="lazy" alt="Book a Patient Appointment step"></div></div>
+<section id="grant-utilisation">
+  <div class="module-tag">Trust &amp; FCRA Compliance</div>
+  <h2>Record Grant Utilisation</h2>
+  <p class="goal">Book spending against a specific grant.</p>
+  <ol><li>Grant Utilisation → New. Pick Fund, enter Amount and Utilisation Date (all required); Purpose is recommended.</li><li>Check the “Outstanding Balance Before This” figure shown, then Submit — this posts the GL entry and reduces the grant&#x27;s outstanding balance.</li></ol>
+  
+  <div class="no-shot">No screenshot from the 18-Aug-2026 testing session covers this workflow — steps are drawn from the DocType configuration, not illustrated.</div>
+</section>
+<section id="fund-transfer">
+  <div class="module-tag">Trust &amp; FCRA Compliance</div>
+  <h2>Transfer money between two Funds</h2>
+  <p class="goal">Move money between funds (e.g. Unrestricted → a Designated fund) without touching the overall trial balance.</p>
+  <ol><li>Fund Transfer → New. Pick From Fund and To Fund, enter Amount, Transfer Date and Reason (all required).</li><li>Submit — both legs post to the same equity clearing account.</li></ol>
+  <div class="watch"><strong>Watch out for:</strong> Corpus can only be a To Fund, never a From Fund — you cannot draw money out of corpus this way, only into it.</div>
+  <div class="no-shot">No screenshot from the 18-Aug-2026 testing session covers this workflow — steps are drawn from the DocType configuration, not illustrated.</div>
+</section>
+<section id="inter-unit-transfer">
+  <div class="module-tag">Trust &amp; FCRA Compliance</div>
+  <h2>Record an Inter Unit Transfer</h2>
+  <p class="goal">Move money between two Companies (e.g. Puttaparthi campus paying Whitefield campus).</p>
+  <ol><li>Inter Unit Transfer → New. Pick From Unit/From Fund and To Unit/To Fund, enter Amount and Purpose (all required).</li><li>Submit — this posts one balanced entry in each company; both entries are flagged so the consolidated report excludes them from the group rollup instead of double-counting.</li></ol>
+  
+  <div class="no-shot">No screenshot from the 18-Aug-2026 testing session covers this workflow — steps are drawn from the DocType configuration, not illustrated.</div>
+</section>
+<section id="trust-investment">
+  <div class="module-tag">Trust &amp; FCRA Compliance</div>
+  <h2>Record a Trust Investment and its later Transactions</h2>
+  <p class="goal">Book a Section 11(5) investment purchase, then interest/dividend/redemption against it.</p>
+  <ol><li>Trust Investment → New. Fill Investment Name, Company, Fund, Mode (the permitted investment clause), Instrument Type, Cost, Investment Account and Purchase Date (all required). Tick FCRA Fund / Corpus Investment as applicable.</li><li>Submit.</li><li>For each later interest/dividend/redemption/maturity event: Investment Transaction → New. Pick the Investment, Kind (Interest/Dividend/Redemption/Maturity), Gross Amount and Transaction Date; add TDS if tax was deducted — Net Amount is calculated.</li><li>Submit — see the Investment Register report (Trust Compliance workspace) for the running position across all investments.</li></ol>
+  
+  <div class="shots"><div class="shot"><img src="screenshots/shot_0299.jpg" loading="lazy" alt="Record a Trust Investment and its later Transactions step"></div><div class="shot"><img src="screenshots/shot_0300.jpg" loading="lazy" alt="Record a Trust Investment and its later Transactions step"></div><div class="shot"><img src="screenshots/shot_0301.jpg" loading="lazy" alt="Record a Trust Investment and its later Transactions step"></div></div>
+</section>
+<section id="trust-property">
+  <div class="module-tag">Trust &amp; FCRA Compliance</div>
+  <h2>Register a Trust Property</h2>
+  <p class="goal">Add a donated or acquired property to the register.</p>
+  <ol><li>Trust Property → New (not submittable — stays editable). Fill Property Name, Company, Property Type (Land/Building/Land and Building/Flat/Other), Status (Active/Under Dispute/Disposed) and Fund (all required).</li><li>If the property came in via donation, fill Donated By, Donation Receipt and Donation/Acquisition Date.</li><li>Fill the registry detail — Address, Survey Number, Extent + Extent UOM, Khata/Property ID, Recorded Valuation, Guideline/Market Value — used for the property register report.</li></ol>
+  
+  <div class="shots"><div class="shot"><img src="screenshots/shot_0297.jpg" loading="lazy" alt="Register a Trust Property step"></div><div class="shot"><img src="screenshots/shot_0298.jpg" loading="lazy" alt="Register a Trust Property step"></div></div>
+</section>
+<section id="property-tax">
+  <div class="module-tag">Trust &amp; FCRA Compliance</div>
+  <h2>Raise and pay a Property Tax Schedule</h2>
+  <p class="goal">Track a property tax demand through to payment.</p>
+  <ol><li>Property Tax Schedule → New. Pick Property and Company, fill Financial Year, Tax Demanded and Due Date (all required). Submit.</li><li>Status moves Unpaid → Billed as the linked Purchase Invoice is raised, then → Paid once it&#x27;s settled (or Waived).</li></ol>
+  <div class="watch"><strong>Watch out for:</strong> The system guards against posting the same tax payment twice.</div>
+  <div class="no-shot">No screenshot from the 18-Aug-2026 testing session covers this workflow — steps are drawn from the DocType configuration, not illustrated.</div>
+</section>
+<section id="property-maintenance">
+  <div class="module-tag">Trust &amp; FCRA Compliance</div>
+  <h2>Log Property Maintenance work</h2>
+  <p class="goal">Track repair/AMC/renovation work against a Trust Property.</p>
+  <ol><li>Property Maintenance → New. Pick Property, Type (Repair/AMC/Renovation/Statutory/Other), a Description and Start Date (all required). Submit.</li><li>Move Status Open → In Progress → Completed (or Cancelled) as the work proceeds.</li></ol>
+  
+  <div class="no-shot">No screenshot from the 18-Aug-2026 testing session covers this workflow — steps are drawn from the DocType configuration, not illustrated.</div>
+</section>
+<section id="form10">
+  <div class="module-tag">Trust &amp; FCRA Compliance</div>
+  <h2>File a Form 10 Accumulation</h2>
+  <p class="goal">Record an Income Tax Act Form 10 filing for accumulation of income.</p>
+  <ol><li>Form 10 Accumulation → New. Fill Company, Financial Year, Amount Accumulated, Period (Years) and Purpose (all required). Submit.</li></ol>
+  
+  <div class="no-shot">No screenshot from the 18-Aug-2026 testing session covers this workflow — steps are drawn from the DocType configuration, not illustrated.</div>
 </section>
 <section id="patient-ticket">
   <div class="module-tag">Patient Ticketing</div>
@@ -121,6 +276,22 @@ ol li{margin-bottom:6px}
   
   <div class="shots"><div class="shot"><img src="screenshots/shot_0302.jpg" loading="lazy" alt="Submit and handle a Patient Ticket step"></div><div class="shot"><img src="screenshots/shot_0303.jpg" loading="lazy" alt="Submit and handle a Patient Ticket step"></div><div class="shot"><img src="screenshots/shot_0305.jpg" loading="lazy" alt="Submit and handle a Patient Ticket step"></div><div class="shot"><img src="screenshots/shot_0306.jpg" loading="lazy" alt="Submit and handle a Patient Ticket step"></div></div>
 </section>
+<section id="ticket-settings">
+  <div class="module-tag">Patient Ticketing</div>
+  <h2>Configure Patient Ticket Settings</h2>
+  <p class="goal">One-time setup of the public reporting form (Administrator only).</p>
+  <ol><li>Patient Ticket Settings (single record) → set Hospital Name and Hospital Notification Email.</li><li>Pick Storage Provider (Frappe Private Files or Google Drive — the Drive folder ID field only appears when Google Drive is chosen).</li><li>Set the list of Departments the public form offers, Allowed File Types, Maximum File Size, Maximum Files per Submission, Submissions per Hour per IP (rate limiting) and Closed Ticket Retention Days.</li></ol>
+  
+  <div class="shots"><div class="shot"><img src="screenshots/shot_0306.jpg" loading="lazy" alt="Configure Patient Ticket Settings step"></div><div class="shot"><img src="screenshots/shot_0308.jpg" loading="lazy" alt="Configure Patient Ticket Settings step"></div><div class="shot"><img src="screenshots/shot_0310.jpg" loading="lazy" alt="Configure Patient Ticket Settings step"></div></div>
+</section>
+<section id="patient-followup">
+  <div class="module-tag">Patient Follow-Up Register</div>
+  <h2>Log a volunteer Patient Follow-Up call</h2>
+  <p class="goal">Record an append-only follow-up contact with a discharged patient.</p>
+  <ol><li>Patient Follow-Up → New. Fill Patient ID (WS MRN), Patient Name, Contact Date and Contact Mode (Phone/In person/Video call/SMS-WhatsApp) — all required.</li><li>Set Patient Status (Stable/Improved/Deteriorated/Readmitted/Deceased/Unreachable) and Medication Adherence (Full/Partial/None/Not applicable) — both required.</li><li>If Readmitted Since Discharge is ticked, fill Readmission Facility. Add Next Follow-Up Date if another call is planned, then save.</li></ol>
+  <div class="watch"><strong>Watch out for:</strong> Existing entries cannot be edited or deleted by anyone, including the volunteer who logged them — if something was entered wrong, log a fresh corrected entry instead of trying to fix the old one.</div>
+  <div class="no-shot">No screenshot from the 18-Aug-2026 testing session covers this workflow — steps are drawn from the DocType configuration, not illustrated.</div>
+</section>
 <section id="sparsh">
   <div class="module-tag">Sai Sparsh</div>
   <h2>Log a Sai Sparsh visit and follow-up call</h2>
@@ -129,13 +300,173 @@ ol li{margin-bottom:6px}
   
   <div class="shots"><div class="shot"><img src="screenshots/shot_0333.jpg" loading="lazy" alt="Log a Sai Sparsh visit and follow-up call step"></div><div class="shot"><img src="screenshots/shot_0334.jpg" loading="lazy" alt="Log a Sai Sparsh visit and follow-up call step"></div><div class="shot"><img src="screenshots/shot_0335.jpg" loading="lazy" alt="Log a Sai Sparsh visit and follow-up call step"></div><div class="shot"><img src="screenshots/shot_0336.jpg" loading="lazy" alt="Log a Sai Sparsh visit and follow-up call step"></div></div>
 </section>
+<section id="sales-invoice">
+  <div class="module-tag">Accounting / ERPNext core</div>
+  <h2>Raise a Sales Invoice</h2>
+  <p class="goal">Bill a customer and post the GL entry in one step.</p>
+  <ol><li>Accounts → Sales Invoice → New. Pick the Company and Customer — billing address and currency fill in automatically.</li><li>Add item rows with quantity and rate. Tax rows are pulled in automatically but can be adjusted.</li><li>If the sale also moves stock and there&#x27;s no separate Delivery Note, tick Update Stock so one document covers both.</li><li>Save, then Submit. Submitting is what posts the GL entry — receivable, income and tax accounts update together; there&#x27;s no separate “post to ledger” step.</li></ol>
+  <div class="watch"><strong>Watch out for:</strong> An Item flagged Is Fixed Asset (e.g. a cath lab monitor tracked as a depreciable asset) is rejected on a Sales Invoice line unless you pick the specific Asset record it&#x27;s billing against. For a normal sale, use an ordinary (non-fixed-asset) Item instead.</div>
+  <div class="shots"><div class="shot"><img src="screenshots/shot_0044.jpg" loading="lazy" alt="Raise a Sales Invoice step"></div><div class="shot"><img src="screenshots/shot_0051.jpg" loading="lazy" alt="Raise a Sales Invoice step"></div><div class="shot"><img src="screenshots/shot_0064.jpg" loading="lazy" alt="Raise a Sales Invoice step"></div><div class="shot"><img src="screenshots/shot_0083.jpg" loading="lazy" alt="Raise a Sales Invoice step"></div></div>
+</section>
+<section id="collect-payment">
+  <div class="module-tag">Accounting / ERPNext core</div>
+  <h2>Collect payment against a Sales Invoice</h2>
+  <p class="goal">Record money received against an already-submitted invoice.</p>
+  <ol><li>Open the submitted Sales Invoice, use its payment action to record what was received — this reduces the invoice&#x27;s outstanding balance directly.</li><li>If money came in without being tied to an invoice yet, use Payment Reconciliation afterwards to match it up.</li></ol>
+  
+  <div class="no-shot">No screenshot from the 18-Aug-2026 testing session covers this workflow — steps are drawn from the DocType configuration, not illustrated.</div>
+</section>
+<section id="purchase-invoice">
+  <div class="module-tag">Accounting / ERPNext core</div>
+  <h2>Raise a Purchase Invoice</h2>
+  <p class="goal">Record a supplier bill.</p>
+  <ol><li>Accounts → Purchase Invoice → New. Pick Supplier.</li><li>Add item or expense rows.</li><li>Save, then Submit.</li></ol>
+  
+  <div class="shots"><div class="shot"><img src="screenshots/shot_0256.jpg" loading="lazy" alt="Raise a Purchase Invoice step"></div><div class="shot"><img src="screenshots/shot_0259.jpg" loading="lazy" alt="Raise a Purchase Invoice step"></div><div class="shot"><img src="screenshots/shot_0263.jpg" loading="lazy" alt="Raise a Purchase Invoice step"></div><div class="shot"><img src="screenshots/shot_0264.jpg" loading="lazy" alt="Raise a Purchase Invoice step"></div></div>
+</section>
+<section id="journal-entry">
+  <div class="module-tag">Accounting / ERPNext core</div>
+  <h2>Post a manual Journal Entry</h2>
+  <p class="goal">Make a direct GL adjustment that doesn&#x27;t come from an invoice/bill.</p>
+  <ol><li>Accounts → Journal Entry → New. Add at least two rows so the debit total equals the credit total.</li><li>Save, then Submit — blocked if it doesn&#x27;t balance (₹0.01 rounding tolerance).</li></ol>
+  
+  <div class="no-shot">No screenshot from the 18-Aug-2026 testing session covers this workflow — steps are drawn from the DocType configuration, not illustrated.</div>
+</section>
+<section id="gl-reports">
+  <div class="module-tag">Accounting / ERPNext core</div>
+  <h2>View Trial Balance / P&amp;L / Balance Sheet / General Ledger</h2>
+  <p class="goal">Check the books, filtered by Company and date range.</p>
+  <ol><li>Accounts → Trial Balance / Profit and Loss / Balance Sheet / General Ledger.</li><li>Filter by Company and date range to scope the report.</li></ol>
+  
+  <div class="shots"><div class="shot"><img src="screenshots/shot_0374.jpg" loading="lazy" alt="View Trial Balance / P&amp;L / Balance Sheet / General Ledger step"></div><div class="shot"><img src="screenshots/shot_0375.jpg" loading="lazy" alt="View Trial Balance / P&amp;L / Balance Sheet / General Ledger step"></div><div class="shot"><img src="screenshots/shot_0376.jpg" loading="lazy" alt="View Trial Balance / P&amp;L / Balance Sheet / General Ledger step"></div></div>
+</section>
+<section id="employee">
+  <div class="module-tag">HRMS (Frappe HR)</div>
+  <h2>Create an Employee record</h2>
+  <p class="goal">Onboard a new staff member into HRMS.</p>
+  <ol><li>HR → Employee → New. Fill the required identity fields (name, date of joining, department, designation).</li><li>Save — this is the master record everything else (leave, payroll, roster) links against.</li></ol>
+  
+  <div class="shots"><div class="shot"><img src="screenshots/shot_0086.jpg" loading="lazy" alt="Create an Employee record step"></div><div class="shot"><img src="screenshots/shot_0090.jpg" loading="lazy" alt="Create an Employee record step"></div><div class="shot"><img src="screenshots/shot_0092.jpg" loading="lazy" alt="Create an Employee record step"></div></div>
+</section>
+<section id="leave">
+  <div class="module-tag">HRMS (Frappe HR)</div>
+  <h2>Apply for and approve Leave</h2>
+  <p class="goal">Submit a leave request and have it approved.</p>
+  <ol><li>HR → Leave Application → New. The form shows your current Allocated Leaves for reference.</li><li>Pick the Leave Type and From/To dates. Save — there&#x27;s no separate Submit step for the employee; saving changes the status to Open and emails your Leave Approver.</li><li>As the Approver: you get an email when an application is saved; from the record, Approve, Reject or Cancel it — it&#x27;s the Approver, not the employee, who does the final Submit.</li></ol>
+  <div class="watch"><strong>Watch out for:</strong> A leave application can&#x27;t span two different leave-allocation periods (split it into two applications), and it can&#x27;t be submitted once payroll has already been processed for that period.</div>
+  <div class="shots"><div class="shot"><img src="screenshots/shot_0385.jpg" loading="lazy" alt="Apply for and approve Leave step"></div><div class="shot"><img src="screenshots/shot_0386.jpg" loading="lazy" alt="Apply for and approve Leave step"></div><div class="shot"><img src="screenshots/shot_0387.jpg" loading="lazy" alt="Apply for and approve Leave step"></div></div>
+</section>
+<section id="leave-allocation">
+  <div class="module-tag">HRMS (Frappe HR)</div>
+  <h2>Allocate Leave to an employee</h2>
+  <p class="goal">Set up how much leave an employee has to draw on before they can apply.</p>
+  <ol><li>HR → Leave Allocation → New. Pick Employee and Leave Type, set the allocation period and the number of leaves allocated.</li><li>Save — the employee&#x27;s Leave Application then shows this figure as their Allocated Leaves.</li></ol>
+  
+  <div class="shots"><div class="shot"><img src="screenshots/shot_0388.jpg" loading="lazy" alt="Allocate Leave to an employee step"></div><div class="shot"><img src="screenshots/shot_0389.jpg" loading="lazy" alt="Allocate Leave to an employee step"></div><div class="shot"><img src="screenshots/shot_0390.jpg" loading="lazy" alt="Allocate Leave to an employee step"></div></div>
+</section>
+<section id="payroll">
+  <div class="module-tag">HRMS (Frappe HR)</div>
+  <h2>Run Payroll</h2>
+  <p class="goal">Process a month&#x27;s salary run and post it to the GL.</p>
+  <ol><li>HR → Payroll Entry → New. Pick Company, the month, and the employees to include.</li><li>Save, then Submit.</li><li>Create Salary Slips from the Payroll Entry, then Submit the Salary Slips — this is what posts the payroll GL entry (debit Salary Expense, credit Salary/Tax/PF/ESI Payable).</li></ol>
+  
+  <div class="no-shot">No screenshot from the 18-Aug-2026 testing session covers this workflow — steps are drawn from the DocType configuration, not illustrated.</div>
+</section>
+<section id="attendance">
+  <div class="module-tag">HRMS (Frappe HR)</div>
+  <h2>Mark attendance / check in-out</h2>
+  <p class="goal">Capture daily attendance for payroll and leave purposes.</p>
+  <ol><li>Staff use the Frappe HR mobile app to check in and out with geolocation directly, rather than a desk form.</li></ol>
+  
+  <div class="no-shot">No screenshot from the 18-Aug-2026 testing session covers this workflow — steps are drawn from the DocType configuration, not illustrated.</div>
+</section>
+<section id="expense-claim">
+  <div class="module-tag">HRMS (Frappe HR)</div>
+  <h2>Submit an Expense Claim</h2>
+  <p class="goal">Claim reimbursement for a work expense.</p>
+  <ol><li>HR → Expense Claim → New. Add expense rows with amount and category.</li><li>Save, then Submit — this routes through the configured approval level(s).</li></ol>
+  
+  <div class="no-shot">No screenshot from the 18-Aug-2026 testing session covers this workflow — steps are drawn from the DocType configuration, not illustrated.</div>
+</section>
+<section id="appointment">
+  <div class="module-tag">Healthcare</div>
+  <h2>Book a Patient Appointment</h2>
+  <p class="goal">Schedule a patient&#x27;s visit to a practitioner.</p>
+  <ol><li>If the patient is new: Healthcare → Patient → New, then save.</li><li>Healthcare → Patient Appointment → New. Pick the Medical Department, Practitioner and date — available slots for that practitioner are pulled from their schedule and shown with status indicators, so you pick an open slot rather than typing a time blind.</li><li>Save. The appointment&#x27;s own status then moves itself: Scheduled → Open (on the day) → Closed (once an Encounter or Clinical Procedure exists against it) — or Cancelled.</li></ol>
+  <div class="watch"><strong>Watch out for:</strong> If an Appointment Type&#x27;s own Default Duration is left blank/zero, any appointment booked against it keeps resetting its Duration to 0 whenever the Appointment Type field is touched — which then blocks saving with “Appointment end must be after start.” Fix this once, at the Appointment Type record, not per appointment.</div>
+  <div class="shots"><div class="shot"><img src="screenshots/shot_0313.jpg" loading="lazy" alt="Book a Patient Appointment step"></div><div class="shot"><img src="screenshots/shot_0315.jpg" loading="lazy" alt="Book a Patient Appointment step"></div><div class="shot"><img src="screenshots/shot_0316.jpg" loading="lazy" alt="Book a Patient Appointment step"></div><div class="shot"><img src="screenshots/shot_0322.jpg" loading="lazy" alt="Book a Patient Appointment step"></div><div class="shot"><img src="screenshots/shot_0330.jpg" loading="lazy" alt="Book a Patient Appointment step"></div></div>
+</section>
+<section id="encounter">
+  <div class="module-tag">Healthcare</div>
+  <h2>Record a consultation (Patient Encounter)</h2>
+  <p class="goal">Write up a consultation against a booked appointment.</p>
+  <ol><li>Open the booked Patient Appointment and create the Patient Encounter from it — this pulls the patient, department and practitioner details in automatically instead of asking you to retype them.</li><li>Fill in symptoms, diagnosis, observations, notes, prescriptions, investigations and follow-up advice as the consultation proceeds.</li><li>Save — this is what closes the linked Appointment (moves its status to Closed).</li></ol>
+  
+  <div class="shots"><div class="shot"><img src="screenshots/shot_0331.jpg" loading="lazy" alt="Record a consultation (Patient Encounter) step"></div><div class="shot"><img src="screenshots/shot_0332.jpg" loading="lazy" alt="Record a consultation (Patient Encounter) step"></div></div>
+</section>
+<section id="lab-test">
+  <div class="module-tag">Healthcare</div>
+  <h2>Order a lab test and record results</h2>
+  <p class="goal">Raise a lab investigation from a consultation and capture the outcome.</p>
+  <ol><li>From the Patient Encounter, raise a lab order against a test template.</li><li>Once processed, record results against that same order.</li></ol>
+  
+  <div class="no-shot">No screenshot from the 18-Aug-2026 testing session covers this workflow — steps are drawn from the DocType configuration, not illustrated.</div>
+</section>
+<section id="insights">
+  <div class="module-tag">Insights</div>
+  <h2>Build a query, chart and dashboard</h2>
+  <p class="goal">Turn ERP data into a self-service report without writing SQL.</p>
+  <ol><li>Connect a data source once (MySQL, PostgreSQL, DuckDB, BigQuery, or the ERP&#x27;s own database).</li><li>Start from a table, then add steps to filter, join, calculate and organise the data one at a time — each step stays visible and editable on its own.</li><li>As soon as the query has columns and filters, Insights proposes a chart automatically — switch to the Visualise tab to change chart type or fine-tune it.</li><li>Use Add to Dashboard once a chart looks right — dashboards are assembled by dragging charts onto a canvas, and a dashboard-level filter applies to every chart on it at once.</li></ol>
+  
+  <div class="no-shot">No screenshot from the 18-Aug-2026 testing session covers this workflow — steps are drawn from the DocType configuration, not illustrated.</div>
+</section>
 <section id="buzz-event">
   <div class="module-tag">Buzz — Event Management</div>
   <h2>Create and publish a Buzz Event</h2>
   <p class="goal">Put an event live for ticket sales and check-in.</p>
-  <ol><li>Buzz → Buzz Event → New. Pick Team, Category, Host, and (for a physical event) Venue.</li><li>Set Start/End Date and Time, Medium (In Person/Online), and add Short Description and About text.</li><li>Tick Is Published? once it&#x27;s ready to go live on the public site.</li><li>Set up ticket types under Event Ticket Type (Title, Price, Currency, optional Max Tickets cap), and tick Is Published? on each to make it purchasable.</li></ol>
+  <ol><li>Buzz → Buzz Event → New. Pick Team, Category, Host, and (for a physical event) Venue.</li><li>Set Start/End Date and Time, Medium (In Person/Online), and add Short Description and About text.</li><li>Tick Is Published? once it&#x27;s ready to go live on the public site.</li></ol>
   
   <div class="shots"><div class="shot"><img src="screenshots/shot_0338.jpg" loading="lazy" alt="Create and publish a Buzz Event step"></div><div class="shot"><img src="screenshots/shot_0341.jpg" loading="lazy" alt="Create and publish a Buzz Event step"></div><div class="shot"><img src="screenshots/shot_0344.jpg" loading="lazy" alt="Create and publish a Buzz Event step"></div><div class="shot"><img src="screenshots/shot_0357.jpg" loading="lazy" alt="Create and publish a Buzz Event step"></div></div>
+</section>
+<section id="buzz-tickets">
+  <div class="module-tag">Buzz — Event Management</div>
+  <h2>Set up ticket types and take a booking</h2>
+  <p class="goal">Let attendees buy into a published event.</p>
+  <ol><li>Event Ticket Type → New. Pick the Event, a Title (e.g. “Early Bird”, “Standard”), Price and Currency, and optionally a Max Tickets Available cap and an auto-unpublish date. Tick Is Published? to make it purchasable.</li><li>Public, via the event page: an attendee picks a ticket type, fills in attendee details, and pays (or the booking sits as “Verification Pending” for an offline payment method) — this creates one Event Booking (can cover several attendees) and one Event Ticket per attendee, each with its own QR code.</li></ol>
+  
+  <div class="no-shot">No screenshot from the 18-Aug-2026 testing session covers this workflow — steps are drawn from the DocType configuration, not illustrated.</div>
+</section>
+<section id="buzz-checkin">
+  <div class="module-tag">Buzz — Event Management</div>
+  <h2>Check in an attendee on the day</h2>
+  <p class="goal">Admit a ticket holder at the event.</p>
+  <ol><li>Scan the ticket&#x27;s QR code, or look it up.</li><li>Event Check In → New. Pick the Event and the Ticket, then Submit.</li></ol>
+  
+  <div class="no-shot">No screenshot from the 18-Aug-2026 testing session covers this workflow — steps are drawn from the DocType configuration, not illustrated.</div>
+</section>
+<section id="buzz-speaker">
+  <div class="module-tag">Buzz — Event Management</div>
+  <h2>Handle a speaker Talk Proposal</h2>
+  <p class="goal">Take a proposed talk from submission to the published schedule.</p>
+  <ol><li>A prospective speaker submits a Talk Proposal against the event (title, description, one or more speakers via the Speakers table).</li><li>An organiser reviews it and updates its Status (via Talk Proposal Status).</li><li>Once accepted, promote it to an Event Talk to appear on the published schedule.</li></ol>
+  
+  <div class="no-shot">No screenshot from the 18-Aug-2026 testing session covers this workflow — steps are drawn from the DocType configuration, not illustrated.</div>
+</section>
+<section id="buzz-sponsor">
+  <div class="module-tag">Buzz — Event Management</div>
+  <h2>Handle a Sponsorship Enquiry</h2>
+  <p class="goal">Confirm a sponsor for the event.</p>
+  <ol><li>A prospective sponsor submits a Sponsorship Enquiry (company name, logo, tier).</li><li>An organiser reviews it and moves Status Approval Pending → Payment Pending → Paid.</li><li>Record the confirmed sponsor as an Event Sponsor against a Sponsorship Tier.</li></ol>
+  
+  <div class="no-shot">No screenshot from the 18-Aug-2026 testing session covers this workflow — steps are drawn from the DocType configuration, not illustrated.</div>
+</section>
+<section id="buzz-feedback">
+  <div class="module-tag">Buzz — Event Management</div>
+  <h2>Collect Event Feedback</h2>
+  <p class="goal">Gather open-text feedback after an event.</p>
+  <ol><li>Event Feedback is a simple open-text form (“How can we improve?”) linked to the Event — normally reached from a post-event link rather than filled in on the desk.</li></ol>
+  
+  <div class="no-shot">No screenshot from the 18-Aug-2026 testing session covers this workflow — steps are drawn from the DocType configuration, not illustrated.</div>
 </section>
 <section id="student">
   <div class="module-tag">Education</div>
@@ -145,13 +476,37 @@ ol li{margin-bottom:6px}
   
   <div class="shots"><div class="shot"><img src="screenshots/shot_0359.jpg" loading="lazy" alt="Admit a Student step"></div><div class="shot"><img src="screenshots/shot_0360.jpg" loading="lazy" alt="Admit a Student step"></div><div class="shot"><img src="screenshots/shot_0361.jpg" loading="lazy" alt="Admit a Student step"></div></div>
 </section>
+<section id="fee-structure">
+  <div class="module-tag">Education</div>
+  <h2>Set up and collect Fees</h2>
+  <p class="goal">Generate a fee break-up for every student in a group.</p>
+  <ol><li>Build a Fee Structure first — pick the Program and enter each fee component (category + amount) in the Components table.</li><li>Create a Fee Schedule against a Student Group and attach that Fee Structure to it — the moment it&#x27;s attached, the fee break-up for every student in the group is generated automatically rather than entered per student.</li><li>Students/parents can then check and pay fees online through the Student Portal.</li></ol>
+  
+  <div class="no-shot">No screenshot from the 18-Aug-2026 testing session covers this workflow — steps are drawn from the DocType configuration, not illustrated.</div>
+</section>
 <section id="lms-course">
   <div class="module-tag">LMS (Frappe Learning)</div>
   <h2>Create and publish an LMS Course</h2>
   <p class="goal">Put a course in front of learners.</p>
-  <ol><li>Courses → New Course → give it a Title and introduction → Create, which opens Course Settings for the remaining details (images, pricing, self-enrol vs. administrator-only enrolment, Published-On date).</li><li>Add chapters, then lessons within each chapter — a lesson can carry video, text, a quiz, a PDF, a SCORM package or an assignment.</li><li>Pick instructors from the Instructors field, then wait for the pill to actually appear before saving — the row is created a moment after you pick the name.</li><li>Check Course Settings if a finished course still isn&#x27;t showing up to learners — it only becomes visible once marked Published.</li></ol>
+  <ol><li>Courses → New Course → give it a Title and introduction → Create, which opens Course Settings for the remaining details (images, pricing, self-enrol vs. administrator-only enrolment, Published-On date).</li><li>Pick instructors from the Instructors field, then wait for the pill to actually appear before saving — the row is created a moment after you pick the name.</li><li>Check Course Settings if a finished course still isn&#x27;t showing up to learners — it only becomes visible once marked Published.</li></ol>
   <div class="watch"><strong>Watch out for:</strong> Saving immediately after picking an instructor name can show “Instructors is required” even though a name was just picked — this is a timing artifact (the child row takes ~1–1.5s to register), not a bug. Wait for the pill, then save.</div>
   <div class="shots"><div class="shot"><img src="screenshots/shot_0363.jpg" loading="lazy" alt="Create and publish an LMS Course step"></div><div class="shot"><img src="screenshots/shot_0364.jpg" loading="lazy" alt="Create and publish an LMS Course step"></div><div class="shot"><img src="screenshots/shot_0369.jpg" loading="lazy" alt="Create and publish an LMS Course step"></div><div class="shot"><img src="screenshots/shot_0391.jpg" loading="lazy" alt="Create and publish an LMS Course step"></div><div class="shot"><img src="screenshots/shot_0393.jpg" loading="lazy" alt="Create and publish an LMS Course step"></div></div>
+</section>
+<section id="lms-lessons">
+  <div class="module-tag">LMS (Frappe Learning)</div>
+  <h2>Add chapters and lessons to a Course</h2>
+  <p class="goal">Build out the actual course content.</p>
+  <ol><li>A course is chapters, and each chapter holds lessons — the chapter gives the lesson its context.</li><li>Add Lesson appears under each chapter; a lesson can carry video, text, a quiz, a PDF, a SCORM package or an assignment, and can optionally be marked visible to Guests as a free preview.</li></ol>
+  
+  <div class="no-shot">No screenshot from the 18-Aug-2026 testing session covers this workflow — steps are drawn from the DocType configuration, not illustrated.</div>
+</section>
+<section id="lms-learner">
+  <div class="module-tag">LMS (Frappe Learning)</div>
+  <h2>Take a course as a learner</h2>
+  <p class="goal">Enrol and complete a published course.</p>
+  <ol><li>Enrol into a published course, then work through its chapters/lessons in order — videos, quizzes and assignments as the instructor has set them up.</li><li>Discussion forums and (where scheduled) live Zoom sessions with the instructor are also available.</li><li>A certificate is issued on completion.</li></ol>
+  
+  <div class="no-shot">No screenshot from the 18-Aug-2026 testing session covers this workflow — steps are drawn from the DocType configuration, not illustrated.</div>
 </section>
 </main>
 </body></html>
