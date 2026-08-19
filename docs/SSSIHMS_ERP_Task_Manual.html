@@ -1,0 +1,157 @@
+<!doctype html><html><head><meta charset="utf-8">
+<title>SSSIHMS ERP — Task Manual</title>
+<style>
+body{font-family:-apple-system,Segoe UI,Helvetica,Arial,sans-serif;max-width:980px;margin:0 auto;padding:24px;color:#222;background:#fafafa;line-height:1.5}
+header{margin-bottom:24px;border-bottom:2px solid #333;padding-bottom:14px}
+h1{margin:0 0 6px}
+header p{color:#444}
+nav{background:#fff;border:1px solid #ddd;border-radius:8px;padding:14px 18px;margin-bottom:32px;columns:2;column-gap:24px}
+nav a{display:block;margin:4px 0;font-size:14px;break-inside:avoid}
+section{margin-bottom:44px;background:#fff;border:1px solid #ddd;border-radius:10px;padding:20px 24px}
+.module-tag{display:inline-block;font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:#666;background:#eee;border-radius:4px;padding:3px 8px;margin-bottom:8px}
+h2{margin:0 0 6px}
+.goal{color:#555;font-style:italic;margin-top:0}
+ol{padding-left:22px}
+ol li{margin-bottom:6px}
+.watch{background:#fff8e6;border:1px solid #f0dca0;border-radius:6px;padding:10px 14px;margin:14px 0;font-size:14px}
+.shots{margin-top:16px;display:flex;flex-wrap:wrap;gap:12px}
+.shot{flex:1 1 220px;max-width:260px}
+.shot img{width:100%;border:1px solid #eee;border-radius:6px;display:block}
+</style></head><body>
+<header>
+<h1>SSSIHMS ERP — Task Manual</h1>
+<p>Step-by-step instructions for the tasks staff actually do, each illustrated with real screenshots from the 18-Aug-2026 end-to-end testing session in the <strong>Sai Hospital Smoke</strong> company. Organized by task, not by module — find what you're trying to do, not a form name. For the full field-by-field reference, see the companion <a href="SSSIHMS_ERP_User_Manual.md">User Manual</a>.</p>
+</header>
+<nav><a href="#roster">Set up a Ward and assign a Roster</a><a href="#credential">Log and verify a Staff Credential</a><a href="#sales-invoice">Raise a Sales Invoice</a><a href="#purchase-invoice">Raise a Purchase Invoice</a><a href="#employee">Create an Employee record</a><a href="#leave">Apply for and approve Leave</a><a href="#asset-pm">Register an Asset and its Preventive Maintenance schedule</a><a href="#breakdown">Log a Breakdown Repair Ticket</a><a href="#bmw">Log Biomedical Waste (BMW) generation</a><a href="#donation">Record a Trust Donation</a><a href="#appointment">Book a Patient Appointment</a><a href="#patient-ticket">Submit and handle a Patient Ticket</a><a href="#sparsh">Log a Sai Sparsh visit and follow-up call</a><a href="#buzz-event">Create and publish a Buzz Event</a><a href="#student">Admit a Student</a><a href="#lms-course">Create and publish an LMS Course</a></nav>
+<main>
+
+<section id="roster">
+  <div class="module-tag">HR (sssihms_hr)</div>
+  <h2>Set up a Ward and assign a Roster</h2>
+  <p class="goal">Get one ward on record and put an employee on a shift for a given day.</p>
+  <ol><li>HR workspace → Ward → New. Fill Ward Name (required, e.g. “ICU-2”), optionally Department, Floor, Nurse:Patient Ratio, Minimum Senior Coverage. Save.</li><li>HR workspace → Roster Assignment → New. Pick Employee and Ward (both required).</li><li>Enter Day as a number 0–6 (0=Monday … 6=Sunday) — required — and pick Shift: M/E/N/G (required).</li><li>Leave Status as Draft until the roster is finalised, then change it to Published so staff can see it. Save.</li></ol>
+  <div class="watch"><strong>Watch out for:</strong> Day = 0 (Monday) used to be silently rejected by a bug in sssihms_hr — fixed in production (commit e7d63e7). If a Monday roster row still refuses to save, that fix hasn&#x27;t reached this site yet.</div>
+  <div class="shots"><div class="shot"><img src="screenshots/shot_0147.jpg" loading="lazy" alt="Set up a Ward and assign a Roster step"></div><div class="shot"><img src="screenshots/shot_0150.jpg" loading="lazy" alt="Set up a Ward and assign a Roster step"></div><div class="shot"><img src="screenshots/shot_0168.jpg" loading="lazy" alt="Set up a Ward and assign a Roster step"></div><div class="shot"><img src="screenshots/shot_0176.jpg" loading="lazy" alt="Set up a Ward and assign a Roster step"></div><div class="shot"><img src="screenshots/shot_0182.jpg" loading="lazy" alt="Set up a Ward and assign a Roster step"></div></div>
+</section>
+<section id="credential">
+  <div class="module-tag">HR (sssihms_hr)</div>
+  <h2>Log and verify a Staff Credential</h2>
+  <p class="goal">Record a licence/registration for an employee and activate it.</p>
+  <ol><li>HR workspace → Staff Credential → New. Pick Employee and Credential Type (both required, e.g. “Nursing Council Registration”).</li><li>Fill in Credential Number, Issuing Authority, Issue/Expiry Date if you have them, and attach the scanned certificate under Document.</li><li>Save. Status will always save as “pending” — you cannot type “active” directly, even if you try.</li><li>To actually activate it, open the saved record and run the Verify action from the menu (not a plain save). This is what sets Status to active and stamps Verified By / Verified At.</li></ol>
+  <div class="watch"><strong>Watch out for:</strong> A plain edit can never set Status to active — only the Verify action can. This is deliberate, so activation is always attributable to whoever ran it.</div>
+  <div class="shots"><div class="shot"><img src="screenshots/shot_0119.jpg" loading="lazy" alt="Log and verify a Staff Credential step"></div><div class="shot"><img src="screenshots/shot_0123.jpg" loading="lazy" alt="Log and verify a Staff Credential step"></div><div class="shot"><img src="screenshots/shot_0126.jpg" loading="lazy" alt="Log and verify a Staff Credential step"></div><div class="shot"><img src="screenshots/shot_0127.jpg" loading="lazy" alt="Log and verify a Staff Credential step"></div></div>
+</section>
+<section id="sales-invoice">
+  <div class="module-tag">Accounting / ERPNext core</div>
+  <h2>Raise a Sales Invoice</h2>
+  <p class="goal">Bill a customer and post the GL entry in one step.</p>
+  <ol><li>Accounts → Sales Invoice → New. Pick the Company and Customer — billing address and currency fill in automatically.</li><li>Add item rows with quantity and rate. Tax rows are pulled in automatically but can be adjusted.</li><li>If the sale also moves stock and there&#x27;s no separate Delivery Note, tick Update Stock so one document covers both.</li><li>Save, then Submit. Submitting is what posts the GL entry — receivable, income and tax accounts update together; there&#x27;s no separate “post to ledger” step.</li></ol>
+  <div class="watch"><strong>Watch out for:</strong> An Item flagged Is Fixed Asset (e.g. a cath lab monitor tracked as a depreciable asset) is rejected on a Sales Invoice line unless you pick the specific Asset record it&#x27;s billing against. For a normal sale, use an ordinary (non-fixed-asset) Item instead.</div>
+  <div class="shots"><div class="shot"><img src="screenshots/shot_0044.jpg" loading="lazy" alt="Raise a Sales Invoice step"></div><div class="shot"><img src="screenshots/shot_0051.jpg" loading="lazy" alt="Raise a Sales Invoice step"></div><div class="shot"><img src="screenshots/shot_0064.jpg" loading="lazy" alt="Raise a Sales Invoice step"></div><div class="shot"><img src="screenshots/shot_0083.jpg" loading="lazy" alt="Raise a Sales Invoice step"></div></div>
+</section>
+<section id="purchase-invoice">
+  <div class="module-tag">Accounting / ERPNext core</div>
+  <h2>Raise a Purchase Invoice</h2>
+  <p class="goal">Record a supplier bill.</p>
+  <ol><li>Accounts → Purchase Invoice → New. Pick Supplier.</li><li>Add item or expense rows.</li><li>Save, then Submit.</li></ol>
+  
+  <div class="shots"><div class="shot"><img src="screenshots/shot_0256.jpg" loading="lazy" alt="Raise a Purchase Invoice step"></div><div class="shot"><img src="screenshots/shot_0259.jpg" loading="lazy" alt="Raise a Purchase Invoice step"></div><div class="shot"><img src="screenshots/shot_0263.jpg" loading="lazy" alt="Raise a Purchase Invoice step"></div><div class="shot"><img src="screenshots/shot_0264.jpg" loading="lazy" alt="Raise a Purchase Invoice step"></div></div>
+</section>
+<section id="employee">
+  <div class="module-tag">HRMS (Frappe HR)</div>
+  <h2>Create an Employee record</h2>
+  <p class="goal">Onboard a new staff member into HRMS.</p>
+  <ol><li>HR → Employee → New. Fill the required identity fields (name, date of joining, department, designation).</li><li>Save — this is the master record everything else (leave, payroll, roster) links against.</li></ol>
+  
+  <div class="shots"><div class="shot"><img src="screenshots/shot_0086.jpg" loading="lazy" alt="Create an Employee record step"></div><div class="shot"><img src="screenshots/shot_0090.jpg" loading="lazy" alt="Create an Employee record step"></div><div class="shot"><img src="screenshots/shot_0092.jpg" loading="lazy" alt="Create an Employee record step"></div></div>
+</section>
+<section id="leave">
+  <div class="module-tag">HRMS (Frappe HR)</div>
+  <h2>Apply for and approve Leave</h2>
+  <p class="goal">Submit a leave request and have it approved.</p>
+  <ol><li>HR → Leave Application → New. The form shows your current Allocated Leaves for reference.</li><li>Pick the Leave Type and From/To dates. Save — there&#x27;s no separate Submit step for the employee; saving changes the status to Open and emails your Leave Approver.</li><li>As the Approver: you get an email when an application is saved; from the record, Approve, Reject or Cancel it — it&#x27;s the Approver, not the employee, who does the final Submit.</li></ol>
+  <div class="watch"><strong>Watch out for:</strong> A leave application can&#x27;t span two different leave-allocation periods (split it into two applications), and it can&#x27;t be submitted once payroll has already been processed for that period.</div>
+  <div class="shots"><div class="shot"><img src="screenshots/shot_0385.jpg" loading="lazy" alt="Apply for and approve Leave step"></div><div class="shot"><img src="screenshots/shot_0386.jpg" loading="lazy" alt="Apply for and approve Leave step"></div><div class="shot"><img src="screenshots/shot_0387.jpg" loading="lazy" alt="Apply for and approve Leave step"></div></div>
+</section>
+<section id="asset-pm">
+  <div class="module-tag">Facility &amp; Equipment Management</div>
+  <h2>Register an Asset and its Preventive Maintenance schedule</h2>
+  <p class="goal">Track a piece of equipment and when it&#x27;s next due for servicing.</p>
+  <ol><li>Facility Management → Asset → New. Fill in the asset details (name, category, location).</li><li>Facility Management → PM Schedule → New. Pick Reference Type = Asset and the specific asset record, Periodicity (Monthly/Quarterly/Half-Yearly/Annual) and Due Date.</li><li>When the work is done: open or create the linked PM Record, fill Completion Date and who performed it, tick Has Certificate if one was received, and Submit — this rolls the PM Schedule&#x27;s due date forward automatically.</li></ol>
+  
+  <div class="shots"><div class="shot"><img src="screenshots/shot_0220.jpg" loading="lazy" alt="Register an Asset and its Preventive Maintenance schedule step"></div><div class="shot"><img src="screenshots/shot_0239.jpg" loading="lazy" alt="Register an Asset and its Preventive Maintenance schedule step"></div><div class="shot"><img src="screenshots/shot_0248.jpg" loading="lazy" alt="Register an Asset and its Preventive Maintenance schedule step"></div><div class="shot"><img src="screenshots/shot_0268.jpg" loading="lazy" alt="Register an Asset and its Preventive Maintenance schedule step"></div><div class="shot"><img src="screenshots/shot_0271.jpg" loading="lazy" alt="Register an Asset and its Preventive Maintenance schedule step"></div></div>
+</section>
+<section id="breakdown">
+  <div class="module-tag">Facility &amp; Equipment Management</div>
+  <h2>Log a Breakdown Repair Ticket</h2>
+  <p class="goal">Track an equipment fault through to repair.</p>
+  <ol><li>Facility Management → Breakdown Repair Ticket → New. Pick the affected asset (Reference Type/Reference, required) and Priority (Low/Medium/High/Critical).</li><li>Move Status through Open → Assigned → In Progress → Resolved → Closed in order as the repair progresses, filling the matching timestamp fields as each stage happens.</li><li>Fill Root Cause and Corrective Action once resolved.</li></ol>
+  
+  <div class="shots"><div class="shot"><img src="screenshots/shot_0129.jpg" loading="lazy" alt="Log a Breakdown Repair Ticket step"></div><div class="shot"><img src="screenshots/shot_0274.jpg" loading="lazy" alt="Log a Breakdown Repair Ticket step"></div><div class="shot"><img src="screenshots/shot_0275.jpg" loading="lazy" alt="Log a Breakdown Repair Ticket step"></div></div>
+</section>
+<section id="bmw">
+  <div class="module-tag">Facility &amp; Equipment Management</div>
+  <h2>Log Biomedical Waste (BMW) generation</h2>
+  <p class="goal">Record a bag of waste generated by a department, ready for handover.</p>
+  <ol><li>Set up the generating department once: Facility Management → BMW Department → New — name, short Code, optional link to the HR Department.</li><li>Each time a bag is generated: BMW Bag → New. Fill Bag No, Department, Category (Yellow/Red/White/Blue — the standard colour-coding), Weight (kg) and Generated At.</li><li>If a bag was logged in error, set Status to Void with a Void Reason — do not delete it.</li></ol>
+  <div class="watch"><strong>Watch out for:</strong> Is Cytotoxic only appears/matters when Category = Yellow.</div>
+  <div class="shots"><div class="shot"><img src="screenshots/shot_0197.jpg" loading="lazy" alt="Log Biomedical Waste (BMW) generation step"></div><div class="shot"><img src="screenshots/shot_0200.jpg" loading="lazy" alt="Log Biomedical Waste (BMW) generation step"></div><div class="shot"><img src="screenshots/shot_0203.jpg" loading="lazy" alt="Log Biomedical Waste (BMW) generation step"></div><div class="shot"><img src="screenshots/shot_0215.jpg" loading="lazy" alt="Log Biomedical Waste (BMW) generation step"></div></div>
+</section>
+<section id="donation">
+  <div class="module-tag">Trust &amp; FCRA Compliance</div>
+  <h2>Record a Trust Donation</h2>
+  <p class="goal">Post a donation to the correct fund with a gap-free receipt number.</p>
+  <ol><li>One-time setup: create the Fund (Fund Code/Name, Company, Fund Class — Corpus/Restricted/Designated/Unrestricted, and whether it&#x27;s FCRA) and the Trust Donor (donor master with PAN, country, anonymous flag).</li><li>Trust Donation → New. Pick Donor, Company, Donation Date, Amount and Mode (Cash/Bank/UPI/Cheque/In Kind).</li><li>Pick the Fund this donation goes into. Tick Corpus Donation if the donor directed it to corpus, Grant if it&#x27;s deferred-income grant money, Anonymous to suppress the donor&#x27;s name on public reports.</li><li>Leave Receipt No blank — it&#x27;s auto-assigned from the gap-free receipt series. Save, then Submit — submitting is what posts the balanced GL entry and assigns the receipt number.</li></ol>
+  <div class="watch"><strong>Watch out for:</strong> Get the Trust Company Account mapping (donation income, corpus fund, FCRA bank account, TDS) right before recording any donation — the posting logic uses it automatically and won&#x27;t ask again mid-entry.</div>
+  <div class="shots"><div class="shot"><img src="screenshots/shot_0276.jpg" loading="lazy" alt="Record a Trust Donation step"></div><div class="shot"><img src="screenshots/shot_0280.jpg" loading="lazy" alt="Record a Trust Donation step"></div><div class="shot"><img src="screenshots/shot_0283.jpg" loading="lazy" alt="Record a Trust Donation step"></div><div class="shot"><img src="screenshots/shot_0287.jpg" loading="lazy" alt="Record a Trust Donation step"></div><div class="shot"><img src="screenshots/shot_0288.jpg" loading="lazy" alt="Record a Trust Donation step"></div></div>
+</section>
+<section id="appointment">
+  <div class="module-tag">Healthcare</div>
+  <h2>Book a Patient Appointment</h2>
+  <p class="goal">Schedule a patient&#x27;s visit to a practitioner.</p>
+  <ol><li>If the patient is new: Healthcare → Patient → New, then save.</li><li>Healthcare → Patient Appointment → New. Pick the Medical Department, Practitioner and date — available slots for that practitioner are pulled from their schedule and shown with status indicators, so you pick an open slot rather than typing a time blind.</li><li>Save. The appointment&#x27;s own status then moves itself: Scheduled → Open (on the day) → Closed (once an Encounter or Clinical Procedure exists against it) — or Cancelled.</li></ol>
+  <div class="watch"><strong>Watch out for:</strong> If an Appointment Type&#x27;s own Default Duration is left blank/zero, any appointment booked against it keeps resetting its Duration to 0 whenever the Appointment Type field is touched — which then blocks saving with “Appointment end must be after start.” Fix this once, at the Appointment Type record, not per appointment.</div>
+  <div class="shots"><div class="shot"><img src="screenshots/shot_0313.jpg" loading="lazy" alt="Book a Patient Appointment step"></div><div class="shot"><img src="screenshots/shot_0315.jpg" loading="lazy" alt="Book a Patient Appointment step"></div><div class="shot"><img src="screenshots/shot_0316.jpg" loading="lazy" alt="Book a Patient Appointment step"></div><div class="shot"><img src="screenshots/shot_0322.jpg" loading="lazy" alt="Book a Patient Appointment step"></div><div class="shot"><img src="screenshots/shot_0330.jpg" loading="lazy" alt="Book a Patient Appointment step"></div></div>
+</section>
+<section id="patient-ticket">
+  <div class="module-tag">Patient Ticketing</div>
+  <h2>Submit and handle a Patient Ticket</h2>
+  <p class="goal">Let a member of the public raise a complaint/report, and have staff work it.</p>
+  <ol><li>Public, no login: on /submit-report, fill Patient Name, Mobile Number, Email Address (all required), optional UHID, and Department (required — the list is configured in Patient Ticket Settings). Attach any supporting files within the configured limits.</li><li>The system creates the Patient Ticket itself on submit — there&#x27;s no direct form save by the public. The submitter can check progress later at /ticket-status using the reference given at submission.</li><li>Desk side (Patient Ticket Agent): move Status forward — Open → Under Review → Appointment Confirmed → Closed/Cancelled — add replies visible to the patient, and use Internal Notes for staff-only context.</li></ol>
+  
+  <div class="shots"><div class="shot"><img src="screenshots/shot_0302.jpg" loading="lazy" alt="Submit and handle a Patient Ticket step"></div><div class="shot"><img src="screenshots/shot_0303.jpg" loading="lazy" alt="Submit and handle a Patient Ticket step"></div><div class="shot"><img src="screenshots/shot_0305.jpg" loading="lazy" alt="Submit and handle a Patient Ticket step"></div><div class="shot"><img src="screenshots/shot_0306.jpg" loading="lazy" alt="Submit and handle a Patient Ticket step"></div></div>
+</section>
+<section id="sparsh">
+  <div class="module-tag">Sai Sparsh</div>
+  <h2>Log a Sai Sparsh visit and follow-up call</h2>
+  <p class="goal">Run a lifestyle-coaching intake and a later coaching call against it.</p>
+  <ol><li>Healthcare → Sparsh Visit → New, filled once at the first visit: work top to bottom through the tabs — habits/conditions tables, the Curry (Nutrition) / Hurry (Movement) / Worry (Stress) sections, the measurements the caregiver consents to.</li><li>Tick any red-flag triage boxes that came up (Physiotherapy/Dietician/Cardiology/General Medicine/Counselling/Other) — this decides whether the person needs referral before coaching continues.</li><li>Finish with the Touchpoint/Closure section, then Submit.</li><li>For each later coaching call: Sparsh Follow Up → New. Record Progress on Pledge and any Primary Barrier, run the same short lifestyle check, agree a New Target Pledge and Confidence (1–10), set the Current Traffic Light, and Schedule Next Call before saving.</li></ol>
+  
+  <div class="shots"><div class="shot"><img src="screenshots/shot_0333.jpg" loading="lazy" alt="Log a Sai Sparsh visit and follow-up call step"></div><div class="shot"><img src="screenshots/shot_0334.jpg" loading="lazy" alt="Log a Sai Sparsh visit and follow-up call step"></div><div class="shot"><img src="screenshots/shot_0335.jpg" loading="lazy" alt="Log a Sai Sparsh visit and follow-up call step"></div><div class="shot"><img src="screenshots/shot_0336.jpg" loading="lazy" alt="Log a Sai Sparsh visit and follow-up call step"></div></div>
+</section>
+<section id="buzz-event">
+  <div class="module-tag">Buzz — Event Management</div>
+  <h2>Create and publish a Buzz Event</h2>
+  <p class="goal">Put an event live for ticket sales and check-in.</p>
+  <ol><li>Buzz → Buzz Event → New. Pick Team, Category, Host, and (for a physical event) Venue.</li><li>Set Start/End Date and Time, Medium (In Person/Online), and add Short Description and About text.</li><li>Tick Is Published? once it&#x27;s ready to go live on the public site.</li><li>Set up ticket types under Event Ticket Type (Title, Price, Currency, optional Max Tickets cap), and tick Is Published? on each to make it purchasable.</li></ol>
+  
+  <div class="shots"><div class="shot"><img src="screenshots/shot_0338.jpg" loading="lazy" alt="Create and publish a Buzz Event step"></div><div class="shot"><img src="screenshots/shot_0341.jpg" loading="lazy" alt="Create and publish a Buzz Event step"></div><div class="shot"><img src="screenshots/shot_0344.jpg" loading="lazy" alt="Create and publish a Buzz Event step"></div><div class="shot"><img src="screenshots/shot_0357.jpg" loading="lazy" alt="Create and publish a Buzz Event step"></div></div>
+</section>
+<section id="student">
+  <div class="module-tag">Education</div>
+  <h2>Admit a Student</h2>
+  <p class="goal">Bring a new student onto the roll.</p>
+  <ol><li>Student Admission runs the whole admission cycle for a program, including publishing an application form on the website (and, optionally, an application fee) — applicants apply through that form rather than a staff member typing them in one by one.</li><li>Once admitted, students are enrolled into their Program/Courses and split into batches; multiple students can be admitted into the same program in one go.</li></ol>
+  
+  <div class="shots"><div class="shot"><img src="screenshots/shot_0359.jpg" loading="lazy" alt="Admit a Student step"></div><div class="shot"><img src="screenshots/shot_0360.jpg" loading="lazy" alt="Admit a Student step"></div><div class="shot"><img src="screenshots/shot_0361.jpg" loading="lazy" alt="Admit a Student step"></div></div>
+</section>
+<section id="lms-course">
+  <div class="module-tag">LMS (Frappe Learning)</div>
+  <h2>Create and publish an LMS Course</h2>
+  <p class="goal">Put a course in front of learners.</p>
+  <ol><li>Courses → New Course → give it a Title and introduction → Create, which opens Course Settings for the remaining details (images, pricing, self-enrol vs. administrator-only enrolment, Published-On date).</li><li>Add chapters, then lessons within each chapter — a lesson can carry video, text, a quiz, a PDF, a SCORM package or an assignment.</li><li>Pick instructors from the Instructors field, then wait for the pill to actually appear before saving — the row is created a moment after you pick the name.</li><li>Check Course Settings if a finished course still isn&#x27;t showing up to learners — it only becomes visible once marked Published.</li></ol>
+  <div class="watch"><strong>Watch out for:</strong> Saving immediately after picking an instructor name can show “Instructors is required” even though a name was just picked — this is a timing artifact (the child row takes ~1–1.5s to register), not a bug. Wait for the pill, then save.</div>
+  <div class="shots"><div class="shot"><img src="screenshots/shot_0363.jpg" loading="lazy" alt="Create and publish an LMS Course step"></div><div class="shot"><img src="screenshots/shot_0364.jpg" loading="lazy" alt="Create and publish an LMS Course step"></div><div class="shot"><img src="screenshots/shot_0369.jpg" loading="lazy" alt="Create and publish an LMS Course step"></div><div class="shot"><img src="screenshots/shot_0391.jpg" loading="lazy" alt="Create and publish an LMS Course step"></div><div class="shot"><img src="screenshots/shot_0393.jpg" loading="lazy" alt="Create and publish an LMS Course step"></div></div>
+</section>
+</main>
+</body></html>
