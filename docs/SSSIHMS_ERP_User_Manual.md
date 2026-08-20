@@ -891,3 +891,47 @@ code test, so it was not pursued further this pass. The same pattern likely
 applies to Buzz ticket types, Education fee structures, and LMS
 lessons/learner, which is why this pass stopped at 6 of 12 rather than
 manufacturing reference data purely to exercise each form once.
+
+### Fourth retest pass, 20-Aug-2026 — the remaining 6 workflows
+
+- **Lab order/results — confirmed working.** Built the reference-data chain
+  (Pathology department, Item Group "Laboratory", Item Code) and created
+  Lab Test Template "Smoke Test CBC", which auto-opened a New Lab Test form.
+  Created a synthetic patient ("Smoke Lab Patient" — never touch real
+  patient records) and saved `HLC-LAB-2026-00001` successfully.
+- **Insights — confirmed working.** Existing dashboards (e.g. "SAI SPARSH
+  Intake Overview") render fully; a transient one-chart "Internal Server
+  Error" toast cleared on its own — not a genuine defect.
+- **Buzz — Ticket Type / Booking / Check-in — all confirmed working.**
+  Created a "Smoke Test Meetup" event, a "General" ticket type, an Event
+  Booking (`B001`) with an attendee, approved and submitted it (auto-created
+  Event Ticket with a QR code), then created and submitted an Event Check
+  In record against that ticket.
+- **Buzz — Talk Proposal / Sponsorship Enquiry — confirmed broken.** Both
+  doctypes share an Event link field with the same defect: selecting an
+  *existing* Buzz Event from the dropdown always redirects to "Create a new
+  Buzz Event" instead of setting the link, reproduced repeatedly across both
+  doctypes with different selection techniques (mouse click, keyboard
+  arrow+click). This blocks submitting either form against any existing
+  event. Not yet checked on Event Proposal, which likely shares the same
+  field pattern.
+- **Education — fee structure — not verified.** Fee Structure needs a
+  deeper reference chain than Lab Test did (Academic Year → Program → Fee
+  Category → Receivable Account, none of which exist in the smoke company)
+  — not pursued this pass for the same reason as the abandoned Lab Test
+  attempt in the third pass.
+- **LMS — lessons — confirmed working.** Added a chapter and a lesson with
+  content to the existing "Smoke Test Course 2"; the Getting Started
+  checklist correctly ticked off "Add your first lesson". **Learner
+  enrollment — not verified**: enrolling a student requires a Batch, and
+  the smoke company has none configured; not pursued for the same
+  reference-data reason.
+
+All 12 originally-unverified workflows have now been attempted. Final
+tally: 8 confirmed working (Payment Entry, Journal Entry, Attendance,
+Payroll Entry creation, Lab order/results, Insights, Buzz ticket/booking/
+check-in, LMS lessons), 1 confirmed broken and fixed (Patient Follow-Up),
+1 confirmed broken and open (Buzz Talk Proposal/Sponsorship Enquiry Event
+field), 1 investigated and downgraded to not-a-defect (Expense Claim), and
+2 genuinely blocked on missing reference data rather than tested
+(Education fee structure, LMS learner enrollment).

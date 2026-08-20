@@ -409,7 +409,7 @@ ol li{margin-bottom:6px}
   <h2>Order a lab test and record results</h2>
   <p class="goal">Raise a lab investigation from a consultation and capture the outcome.</p>
   <ol><li>From the Patient Encounter, raise a lab order against a test template.</li><li>Once processed, record results against that same order.</li></ol>
-  <div class="watch"><strong>Watch out for:</strong> Not independently verified (20-Aug-2026 retest attempt abandoned): the smoke test company has no Lab Test Template configured at all, and creating one requires a Department plus a billing Item Code and Item Group first — reference-data setup rather than a code test, so this workflow remains unverified against the live system.</div>
+  <div class="watch"><strong>Watch out for:</strong> **Confirmed working (20-Aug-2026 retest).** Built the reference chain (Pathology department, Laboratory item group, an Item Code) to create Lab Test Template &quot;Smoke Test CBC&quot;, which auto-opened a fresh Lab Test form; saved `HLC-LAB-2026-00001` against a synthetic patient. Note: the smoke company still has no Lab Test Template pre-configured — a fresh install needs this chain built once before the workflow can be used.</div>
   <div class="no-shot">No screenshot from the 18-Aug-2026 testing session covers this workflow — steps are drawn from the DocType configuration, not illustrated.</div>
 </section>
 <section id="insights">
@@ -417,7 +417,7 @@ ol li{margin-bottom:6px}
   <h2>Build a query, chart and dashboard</h2>
   <p class="goal">Turn ERP data into a self-service report without writing SQL.</p>
   <ol><li>Connect a data source once (MySQL, PostgreSQL, DuckDB, BigQuery, or the ERP&#x27;s own database).</li><li>Start from a table, then add steps to filter, join, calculate and organise the data one at a time — each step stays visible and editable on its own.</li><li>As soon as the query has columns and filters, Insights proposes a chart automatically — switch to the Visualise tab to change chart type or fine-tune it.</li><li>Use Add to Dashboard once a chart looks right — dashboards are assembled by dragging charts onto a canvas, and a dashboard-level filter applies to every chart on it at once.</li></ol>
-  
+  <div class="watch"><strong>Watch out for:</strong> Confirmed working (20-Aug-2026 retest): existing dashboards render fully. A transient one-chart &quot;Internal Server Error&quot; toast appeared and cleared on its own on reload — not a genuine defect.</div>
   <div class="no-shot">No screenshot from the 18-Aug-2026 testing session covers this workflow — steps are drawn from the DocType configuration, not illustrated.</div>
 </section>
 <section id="buzz-event">
@@ -433,7 +433,7 @@ ol li{margin-bottom:6px}
   <h2>Set up ticket types and take a booking</h2>
   <p class="goal">Let attendees buy into a published event.</p>
   <ol><li>Event Ticket Type → New. Pick the Event, a Title (e.g. “Early Bird”, “Standard”), Price and Currency, and optionally a Max Tickets Available cap and an auto-unpublish date. Tick Is Published? to make it purchasable.</li><li>Public, via the event page: an attendee picks a ticket type, fills in attendee details, and pays (or the booking sits as “Verification Pending” for an offline payment method) — this creates one Event Booking (can cover several attendees) and one Event Ticket per attendee, each with its own QR code.</li></ol>
-  
+  <div class="watch"><strong>Watch out for:</strong> Confirmed working (20-Aug-2026 retest, staff-side): created a ticket type, an Event Booking (`B001`) with one attendee, approved and submitted it — this auto-generated an Event Ticket with a QR code. The equivalent public-facing checkout flow was not separately tested.</div>
   <div class="no-shot">No screenshot from the 18-Aug-2026 testing session covers this workflow — steps are drawn from the DocType configuration, not illustrated.</div>
 </section>
 <section id="buzz-checkin">
@@ -441,7 +441,7 @@ ol li{margin-bottom:6px}
   <h2>Check in an attendee on the day</h2>
   <p class="goal">Admit a ticket holder at the event.</p>
   <ol><li>Scan the ticket&#x27;s QR code, or look it up.</li><li>Event Check In → New. Pick the Event and the Ticket, then Submit.</li></ol>
-  
+  <div class="watch"><strong>Watch out for:</strong> Confirmed working (20-Aug-2026 retest): created and submitted an Event Check In against a live Event Ticket.</div>
   <div class="no-shot">No screenshot from the 18-Aug-2026 testing session covers this workflow — steps are drawn from the DocType configuration, not illustrated.</div>
 </section>
 <section id="buzz-speaker">
@@ -449,7 +449,7 @@ ol li{margin-bottom:6px}
   <h2>Handle a speaker Talk Proposal</h2>
   <p class="goal">Take a proposed talk from submission to the published schedule.</p>
   <ol><li>A prospective speaker submits a Talk Proposal against the event (title, description, one or more speakers via the Speakers table).</li><li>An organiser reviews it and updates its Status (via Talk Proposal Status).</li><li>Once accepted, promote it to an Event Talk to appear on the published schedule.</li></ol>
-  
+  <div class="watch"><strong>Watch out for:</strong> **Confirmed broken (20-Aug-2026 retest).** The Event field&#x27;s link picker is unusable: typing an existing event&#x27;s name and clicking the matching suggestion always redirects to &quot;Create a new Buzz Event&quot; instead of selecting it, reproduced repeatedly with different selection techniques. A Talk Proposal cannot currently be submitted against any existing event. Same defect confirmed on Sponsorship Enquiry&#x27;s Event field — likely a shared issue, not isolated to this doctype.</div>
   <div class="no-shot">No screenshot from the 18-Aug-2026 testing session covers this workflow — steps are drawn from the DocType configuration, not illustrated.</div>
 </section>
 <section id="buzz-sponsor">
@@ -457,7 +457,7 @@ ol li{margin-bottom:6px}
   <h2>Handle a Sponsorship Enquiry</h2>
   <p class="goal">Confirm a sponsor for the event.</p>
   <ol><li>A prospective sponsor submits a Sponsorship Enquiry (company name, logo, tier).</li><li>An organiser reviews it and moves Status Approval Pending → Payment Pending → Paid.</li><li>Record the confirmed sponsor as an Event Sponsor against a Sponsorship Tier.</li></ol>
-  
+  <div class="watch"><strong>Watch out for:</strong> **Confirmed broken (20-Aug-2026 retest) — same defect as Talk Proposal.** The Event field&#x27;s link picker always redirects to &quot;Create a new Buzz Event&quot; instead of selecting an existing one, blocking submission against any existing event.</div>
   <div class="no-shot">No screenshot from the 18-Aug-2026 testing session covers this workflow — steps are drawn from the DocType configuration, not illustrated.</div>
 </section>
 <section id="buzz-feedback">
@@ -481,7 +481,7 @@ ol li{margin-bottom:6px}
   <h2>Set up and collect Fees</h2>
   <p class="goal">Generate a fee break-up for every student in a group.</p>
   <ol><li>Build a Fee Structure first — pick the Program and enter each fee component (category + amount) in the Components table.</li><li>Create a Fee Schedule against a Student Group and attach that Fee Structure to it — the moment it&#x27;s attached, the fee break-up for every student in the group is generated automatically rather than entered per student.</li><li>Students/parents can then check and pay fees online through the Student Portal.</li></ol>
-  
+  <div class="watch"><strong>Watch out for:</strong> Not verified (20-Aug-2026 retest attempt): the smoke company has none of Academic Year, Program, Fee Category, or a Receivable Account configured — a deeper reference-data chain than Lab Test needed, so this wasn&#x27;t built out purely to exercise the form.</div>
   <div class="no-shot">No screenshot from the 18-Aug-2026 testing session covers this workflow — steps are drawn from the DocType configuration, not illustrated.</div>
 </section>
 <section id="lms-course">
@@ -497,7 +497,7 @@ ol li{margin-bottom:6px}
   <h2>Add chapters and lessons to a Course</h2>
   <p class="goal">Build out the actual course content.</p>
   <ol><li>A course is chapters, and each chapter holds lessons — the chapter gives the lesson its context.</li><li>Add Lesson appears under each chapter; a lesson can carry video, text, a quiz, a PDF, a SCORM package or an assignment, and can optionally be marked visible to Guests as a free preview.</li></ol>
-  
+  <div class="watch"><strong>Watch out for:</strong> Confirmed working (20-Aug-2026 retest): added a chapter and a lesson with content to an existing course; the Getting Started checklist correctly ticked off &quot;Add your first lesson&quot;.</div>
   <div class="no-shot">No screenshot from the 18-Aug-2026 testing session covers this workflow — steps are drawn from the DocType configuration, not illustrated.</div>
 </section>
 <section id="lms-learner">
@@ -505,7 +505,7 @@ ol li{margin-bottom:6px}
   <h2>Take a course as a learner</h2>
   <p class="goal">Enrol and complete a published course.</p>
   <ol><li>Enrol into a published course, then work through its chapters/lessons in order — videos, quizzes and assignments as the instructor has set them up.</li><li>Discussion forums and (where scheduled) live Zoom sessions with the instructor are also available.</li><li>A certificate is issued on completion.</li></ol>
-  
+  <div class="watch"><strong>Watch out for:</strong> Not verified (20-Aug-2026 retest attempt): enrolling a learner needs a Batch, and the smoke company has none configured — not built out purely to exercise this one form.</div>
   <div class="no-shot">No screenshot from the 18-Aug-2026 testing session covers this workflow — steps are drawn from the DocType configuration, not illustrated.</div>
 </section>
 </main>
