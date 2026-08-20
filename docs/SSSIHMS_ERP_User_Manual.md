@@ -840,3 +840,46 @@ Attendance, Expense Claim, lab order/results, Insights, and four of Buzz's
 event-lifecycle steps plus Education fees and LMS lessons/learner) — treat
 those as still unverified against the live system rather than assume they
 work because everything else did.
+
+### Third retest pass, 20-Aug-2026 — 6 of the remaining 12 workflows
+
+- **Payment Collection (Payment Entry)** — works end-to-end. Created and
+  submitted `ACC-PAY-2026-00003` against a synthetic customer, Cash - SHU.
+- **Journal Entry** — works end-to-end. Created and submitted
+  `ACC-JV-2026-00051` (Cash debit / Interest Income credit, ₹1,000).
+- **Attendance** — works end-to-end. Created and submitted `HR-ATT-2026-00001`
+  for a synthetic employee.
+- **Payroll Entry (creation)** — works: saved as `HR-PRUN-2026-00001` with
+  Payroll Payable - SHU and a Monthly frequency. "Get Employees" correctly
+  returned "No employees found" because the test employee has no Salary
+  Structure Assignment — expected validation, same class of finding as the
+  Trust-layer GL-gating in the previous pass, not a defect.
+- **Patient Follow-Up Register — confirmed broken.** §22 in the task manual.
+  The New Patient Follow-Up form renders **only the Contact Date field**;
+  every other schema field (Patient ID (WS MRN), Patient Name, Contact Mode,
+  Patient Status, Medication Adherence, Reported Symptoms, etc. — all visible
+  in Customize Form / the doctype's field list) is completely absent from
+  the rendered form. Clicking Save is a silent no-op: no validation dialog,
+  no error toast, no navigation, page stays on "Not Saved". This is a genuine
+  rendering defect, not a permissions or data issue — reproduced on a fresh
+  page load with console/network checked for errors (none thrown).
+- **Expense Claim — confirmed broken.** The Expense Approver field is
+  mandatory and, on a fresh employee, first requires setting
+  `expense_approver` on the Employee master (Attendance & Leaves tab) — that
+  part works correctly and is expected setup, not a bug. But once past that:
+  in the Expense Claim form itself, selecting a value in Expense Approver
+  visually populates the field, yet it **resets to blank on every Save
+  attempt** — reproduced three times in a row, including immediately after
+  selecting from the dropdown with no other field touched in between. Payable
+  Account and Expense Claim Type both save correctly in the same form, so the
+  defect is isolated to this one Link field failing to persist through save.
+
+Six workflows still remain unverified (lab order/results, Insights, four
+Buzz event-lifecycle steps, Education fees, LMS lessons/learner). Lab Test
+was attempted but abandoned partway: the smoke company has **no Lab Test
+Template at all**, and creating one requires a Department plus a billing
+Item Code and Item Group — a chain of reference-data setup rather than a
+code test, so it was not pursued further this pass. The same pattern likely
+applies to Buzz ticket types, Education fee structures, and LMS
+lessons/learner, which is why this pass stopped at 6 of 12 rather than
+manufacturing reference data purely to exercise each form once.

@@ -289,7 +289,7 @@ ol li{margin-bottom:6px}
   <h2>Log a volunteer Patient Follow-Up call</h2>
   <p class="goal">Record an append-only follow-up contact with a discharged patient.</p>
   <ol><li>Patient Follow-Up → New. Fill Patient ID (WS MRN), Patient Name, Contact Date and Contact Mode (Phone/In person/Video call/SMS-WhatsApp) — all required.</li><li>Set Patient Status (Stable/Improved/Deteriorated/Readmitted/Deceased/Unreachable) and Medication Adherence (Full/Partial/None/Not applicable) — both required.</li><li>If Readmitted Since Discharge is ticked, fill Readmission Facility. Add Next Follow-Up Date if another call is planned, then save.</li></ol>
-  <div class="watch"><strong>Watch out for:</strong> Existing entries cannot be edited or deleted by anyone, including the volunteer who logged them — if something was entered wrong, log a fresh corrected entry instead of trying to fix the old one.</div>
+  <div class="watch"><strong>Watch out for:</strong> **Confirmed broken (20-Aug-2026 retest) — do not use.** The New Patient Follow-Up form renders only the Contact Date field; every other field described in the steps above (Patient ID, Patient Name, Contact Mode, Patient Status, Medication Adherence, etc.) is completely absent from the rendered form, and Save is a silent no-op — no error, no save, no navigation. Reproduced on a fresh page load with no console or network errors. This is a genuine rendering defect requiring a code fix, not a data or permissions issue. Existing entries also cannot be edited or deleted by anyone, including the volunteer who logged them — if something was entered wrong, log a fresh corrected entry instead of trying to fix the old one.</div>
   <div class="no-shot">No screenshot from the 18-Aug-2026 testing session covers this workflow — steps are drawn from the DocType configuration, not illustrated.</div>
 </section>
 <section id="sparsh">
@@ -313,7 +313,7 @@ ol li{margin-bottom:6px}
   <h2>Collect payment against a Sales Invoice</h2>
   <p class="goal">Record money received against an already-submitted invoice.</p>
   <ol><li>Open the submitted Sales Invoice, use its payment action to record what was received — this reduces the invoice&#x27;s outstanding balance directly.</li><li>If money came in without being tied to an invoice yet, use Payment Reconciliation afterwards to match it up.</li></ol>
-  
+  <div class="watch"><strong>Watch out for:</strong> Confirmed working (20-Aug-2026 retest) via Payment Entry directly (Payments → Payment Entry → New, Payment Type Receive): Company, Party (Customer), Account Paid From/To and Paid Amount all save and submit cleanly — `ACC-PAY-2026-00003`.</div>
   <div class="no-shot">No screenshot from the 18-Aug-2026 testing session covers this workflow — steps are drawn from the DocType configuration, not illustrated.</div>
 </section>
 <section id="purchase-invoice">
@@ -329,7 +329,7 @@ ol li{margin-bottom:6px}
   <h2>Post a manual Journal Entry</h2>
   <p class="goal">Make a direct GL adjustment that doesn&#x27;t come from an invoice/bill.</p>
   <ol><li>Accounts → Journal Entry → New. Add at least two rows so the debit total equals the credit total.</li><li>Save, then Submit — blocked if it doesn&#x27;t balance (₹0.01 rounding tolerance).</li></ol>
-  
+  <div class="watch"><strong>Watch out for:</strong> Confirmed working (20-Aug-2026 retest): a balanced Cash-debit / Interest-Income-credit entry for ₹1,000 saved and submitted cleanly — `ACC-JV-2026-00051`.</div>
   <div class="no-shot">No screenshot from the 18-Aug-2026 testing session covers this workflow — steps are drawn from the DocType configuration, not illustrated.</div>
 </section>
 <section id="gl-reports">
@@ -369,7 +369,7 @@ ol li{margin-bottom:6px}
   <h2>Run Payroll</h2>
   <p class="goal">Process a month&#x27;s salary run and post it to the GL.</p>
   <ol><li>HR → Payroll Entry → New. Pick Company, the month, and the employees to include.</li><li>Save, then Submit.</li><li>Create Salary Slips from the Payroll Entry, then Submit the Salary Slips — this is what posts the payroll GL entry (debit Salary Expense, credit Salary/Tax/PF/ESI Payable).</li></ol>
-  
+  <div class="watch"><strong>Watch out for:</strong> Creating the Payroll Entry itself works fine (20-Aug-2026 retest: `HR-PRUN-2026-00001`, Company + Payroll Payable Account + Monthly frequency). &quot;Get Employees&quot; correctly returned &quot;No employees found&quot; for a test employee with no Salary Structure Assignment — expected validation, not a bug; a Salary Structure must be assigned to an employee before a payroll run will pick them up.</div>
   <div class="no-shot">No screenshot from the 18-Aug-2026 testing session covers this workflow — steps are drawn from the DocType configuration, not illustrated.</div>
 </section>
 <section id="attendance">
@@ -377,7 +377,7 @@ ol li{margin-bottom:6px}
   <h2>Mark attendance / check in-out</h2>
   <p class="goal">Capture daily attendance for payroll and leave purposes.</p>
   <ol><li>Staff use the Frappe HR mobile app to check in and out with geolocation directly, rather than a desk form.</li></ol>
-  
+  <div class="watch"><strong>Watch out for:</strong> The desk-side Attendance doctype (HR → Attendance → New) was also confirmed working directly (20-Aug-2026 retest): Employee, Attendance Date, Status all save and submit cleanly — `HR-ATT-2026-00001`. Useful for backdated corrections even though staff normally check in/out via the mobile app.</div>
   <div class="no-shot">No screenshot from the 18-Aug-2026 testing session covers this workflow — steps are drawn from the DocType configuration, not illustrated.</div>
 </section>
 <section id="expense-claim">
@@ -385,7 +385,7 @@ ol li{margin-bottom:6px}
   <h2>Submit an Expense Claim</h2>
   <p class="goal">Claim reimbursement for a work expense.</p>
   <ol><li>HR → Expense Claim → New. Add expense rows with amount and category.</li><li>Save, then Submit — this routes through the configured approval level(s).</li></ol>
-  
+  <div class="watch"><strong>Watch out for:</strong> **Confirmed broken (20-Aug-2026 retest).** Expense Approver is mandatory, and must first be set on the Employee master (Attendance &amp; Leaves tab → Approvers → Expense Approver) — that part works correctly. But in the Expense Claim form itself, selecting a value in Expense Approver visually populates the field, then **resets to blank on every Save attempt** — reproduced three times in a row. Payable Account and Expense Claim Type both save correctly in the same form; the defect is isolated to the Expense Approver field failing to persist through save, which blocks submitting any Expense Claim.</div>
   <div class="no-shot">No screenshot from the 18-Aug-2026 testing session covers this workflow — steps are drawn from the DocType configuration, not illustrated.</div>
 </section>
 <section id="appointment">
@@ -409,7 +409,7 @@ ol li{margin-bottom:6px}
   <h2>Order a lab test and record results</h2>
   <p class="goal">Raise a lab investigation from a consultation and capture the outcome.</p>
   <ol><li>From the Patient Encounter, raise a lab order against a test template.</li><li>Once processed, record results against that same order.</li></ol>
-  
+  <div class="watch"><strong>Watch out for:</strong> Not independently verified (20-Aug-2026 retest attempt abandoned): the smoke test company has no Lab Test Template configured at all, and creating one requires a Department plus a billing Item Code and Item Group first — reference-data setup rather than a code test, so this workflow remains unverified against the live system.</div>
   <div class="no-shot">No screenshot from the 18-Aug-2026 testing session covers this workflow — steps are drawn from the DocType configuration, not illustrated.</div>
 </section>
 <section id="insights">
