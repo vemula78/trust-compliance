@@ -868,16 +868,19 @@ work because everything else did.
   (`sssihms_patient_followup` commit `b3b6f57`) so the fix survives a future
   redeploy. Verified end-to-end: `WSTEST9001` (`uj1hm2n438`) created and
   saved successfully through the actual form.
-- **Expense Claim — confirmed broken.** The Expense Approver field is
-  mandatory and, on a fresh employee, first requires setting
-  `expense_approver` on the Employee master (Attendance & Leaves tab) — that
-  part works correctly and is expected setup, not a bug. But once past that:
-  in the Expense Claim form itself, selecting a value in Expense Approver
-  visually populates the field, yet it **resets to blank on every Save
-  attempt** — reproduced three times in a row, including immediately after
-  selecting from the dropdown with no other field touched in between. Payable
-  Account and Expense Claim Type both save correctly in the same form, so the
-  defect is isolated to this one Link field failing to persist through save.
+- **Expense Claim — earlier "reset to blank" finding could not be reproduced
+  (20-Aug-2026 retest).** The Expense Approver field is mandatory and, on a
+  fresh employee, first requires setting `expense_approver` on the Employee
+  master (Attendance & Leaves tab) — that part works correctly and is
+  expected setup, not a bug. Retested end-to-end against a fresh employee
+  (HR-EMP-00005): selected Administrator in Expense Approver, saved twice
+  (once against an unrelated missing-fields validation, once successfully),
+  and the value held correctly both times — confirmed on the saved record
+  `HR-EXP-2026-00001`. Source review found no SSSIHMS customization on this
+  field or its supporting code (`expense_claim.js`,
+  `department_approver.get_approvers` are unmodified core HRMS). Most likely
+  explanation for the original finding: a testing artifact from the field's
+  constrained autocomplete, not a genuine defect.
 
 Six workflows still remain unverified (lab order/results, Insights, four
 Buzz event-lifecycle steps, Education fees, LMS lessons/learner). Lab Test

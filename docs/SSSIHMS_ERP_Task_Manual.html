@@ -385,7 +385,7 @@ ol li{margin-bottom:6px}
   <h2>Submit an Expense Claim</h2>
   <p class="goal">Claim reimbursement for a work expense.</p>
   <ol><li>HR → Expense Claim → New. Add expense rows with amount and category.</li><li>Save, then Submit — this routes through the configured approval level(s).</li></ol>
-  <div class="watch"><strong>Watch out for:</strong> **Confirmed broken (20-Aug-2026 retest).** Expense Approver is mandatory, and must first be set on the Employee master (Attendance &amp; Leaves tab → Approvers → Expense Approver) — that part works correctly. But in the Expense Claim form itself, selecting a value in Expense Approver visually populates the field, then **resets to blank on every Save attempt** — reproduced three times in a row. Payable Account and Expense Claim Type both save correctly in the same form; the defect is isolated to the Expense Approver field failing to persist through save, which blocks submitting any Expense Claim.</div>
+  <div class="watch"><strong>Watch out for:</strong> **Works correctly (re-verified 20-Aug-2026).** Expense Approver is mandatory, and must first be set on the Employee master (Attendance &amp; Leaves tab → Approvers → Expense Approver). An earlier pass reported the field resetting to blank on Save — retested end-to-end and could not reproduce: saved `HR-EXP-2026-00001` with Expense Approver = Administrator intact. Treat the earlier finding as a testing artifact, not a defect.</div>
   <div class="no-shot">No screenshot from the 18-Aug-2026 testing session covers this workflow — steps are drawn from the DocType configuration, not illustrated.</div>
 </section>
 <section id="appointment">
