@@ -854,15 +854,20 @@ work because everything else did.
   returned "No employees found" because the test employee has no Salary
   Structure Assignment — expected validation, same class of finding as the
   Trust-layer GL-gating in the previous pass, not a defect.
-- **Patient Follow-Up Register — confirmed broken.** §22 in the task manual.
-  The New Patient Follow-Up form renders **only the Contact Date field**;
-  every other schema field (Patient ID (WS MRN), Patient Name, Contact Mode,
-  Patient Status, Medication Adherence, Reported Symptoms, etc. — all visible
-  in Customize Form / the doctype's field list) is completely absent from
-  the rendered form. Clicking Save is a silent no-op: no validation dialog,
-  no error toast, no navigation, page stays on "Not Saved". This is a genuine
-  rendering defect, not a permissions or data issue — reproduced on a fresh
-  page load with console/network checked for errors (none thrown).
+- **Patient Follow-Up Register — was broken, fixed 20-Aug-2026.** §22 in the
+  task manual. The New Patient Follow-Up form rendered **only the Contact
+  Date field**; every other schema field (Patient ID (WS MRN), Patient Name,
+  Contact Mode, Patient Status, Medication Adherence, Reported Symptoms,
+  etc.) was completely absent, and Save was a silent no-op. Root cause: the
+  doctype's permission rules granted Create/Read/Print/Report/Export but
+  never **Write** to any role, including System Manager — Frappe requires
+  Write (not just Create) to make fields editable on an unsaved new document,
+  so every field with nothing to display got hidden entirely (Contact Date
+  survived only because it had a default value to show read-only). Fixed
+  live via `DocPerm.write = 1` for all three roles, and in source
+  (`sssihms_patient_followup` commit `b3b6f57`) so the fix survives a future
+  redeploy. Verified end-to-end: `WSTEST9001` (`uj1hm2n438`) created and
+  saved successfully through the actual form.
 - **Expense Claim — confirmed broken.** The Expense Approver field is
   mandatory and, on a fresh employee, first requires setting
   `expense_approver` on the Employee master (Attendance & Leaves tab) — that
